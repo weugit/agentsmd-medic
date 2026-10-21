@@ -1,0 +1,50 @@
+import { readdir } from "node:fs/promises";
+import path from "node:path";
+
+/** File names agents read. AGENTS.override.md is honoured by OpenAI Codex. */
+export const AGENT_FILE_NAMES = ["AGENTS.md", "AGENTS.override.md"];
+
+const ALWAYS_SKIP = new Set([".git", "node_modules", ".hg", ".svn", "dist", "build", "coverage", ".next", ".turbo", "vendor", ".venv", "venv", "__pycache__", "target"]);
+
+export function toPosix(p: string): string {
+  return p.split(path.sep).join("/");
+}
+
+function isIgnored(rel: string, ignore: string[]): boolean {
+  const posix = toPosix(rel);
+  return ignore.some((pattern) => {
+    const p = pattern.replace(/^\.\//, "").replace(/\/+$/, "");
+    if (!p) return false;
+    if (!p.includes("/")) return posix.split("/").includes(p);
+    return posix === p || posix.startsWith(`${p}/`);
+  });
+}
+
+/** Recursively find AGENTS.md files (including nested ones) under `root`. */
+export async function findAgentFiles(root: string, ignore: string[] = []): Promise<string[]> {
+  const found: string[] = [];
+  async function walk(dir: string): Promise<void> {
+    let entries;
+    try {
+      entries = await readdir(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const entry of entries) {
+      const abs = path.join(dir, entry.name);
+      const rel = path.relative(root, abs);
+      if (entry.isDirectory()) {
+        if (ALWAYS_SKIP.has(entry.name) || isIgnored(rel, ignore)) continue;
+        await walk(abs);
+      } else if (entry.isFile() && AGENT_FILE_NAMES.includes(entry.name) && !isIgnored(rel, ignore)) {
+        found.push(abs);
+      }
+    }
+  }
+  await walk(root);
+  return found.sort((a, b) => {
+    const da = a.split(path.sep).length;
+    const db = b.split(path.sep).length;
+    return da - db || a.localeCompare(b);
+  });
+}
