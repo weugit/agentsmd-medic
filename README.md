@@ -33,7 +33,7 @@ cd agentsmd-medic
 npm ci && npm run build && node bin/agentsmd-medic.js
 ```
 
-Node.js 20 or newer is required.
+Node.js 22.12 or newer is required.
 
 ## Usage
 
