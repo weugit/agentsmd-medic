@@ -206,7 +206,7 @@ async function walk(dir: string, root: string, recursive: boolean, extraNames: R
     if (!entry.isFile()) continue;
     const rel = relPosix(root, abs);
     if (!isInteresting(rel, entry.name, extraNames)) continue;
-    let bytes = 0;
+    let bytes: number;
     try {
       bytes = (await stat(abs)).size;
     } catch {
@@ -319,7 +319,7 @@ async function reportClaude(files: DiskFile[], chain: string[]): Promise<DoctorA
   const importing = new Set<string>();
   const importedAgents = new Set<string>();
   for (const file of claude) {
-    let text = "";
+    let text: string;
     try {
       text = await readFile(file.abs, "utf8");
     } catch {
