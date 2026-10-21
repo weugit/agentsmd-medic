@@ -33,8 +33,8 @@ body:
   - type: input
     id: version
     attributes:
-      label: agentsmd-lint version
-      description: Output of `agentsmd-lint --version`, or the git commit if you ran the source tree.
+      label: agentsmd-doctor version
+      description: Output of `agentsmd-doctor --version`, or the git commit if you ran the source tree.
       placeholder: 0.1.0
     validations:
       required: true
@@ -61,7 +61,7 @@ body:
     id: config
     attributes:
       label: Config
-      description: Contents of .agentsmd-lint.json or agentsmd-lint.config.json, if you use one. Remove anything secret.
+      description: Contents of .agentsmd-doctor.json or agentsmd-doctor.config.json, if you use one. Remove anything secret.
       render: json
     validations:
       required: false
@@ -69,7 +69,7 @@ body:
     id: output
     attributes:
       label: Output
-      description: Paste the report from `agentsmd-lint --no-color`.
+      description: Paste the report from `agentsmd-doctor --no-color`.
       render: text
     validations:
       required: false

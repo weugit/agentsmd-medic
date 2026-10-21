@@ -15,7 +15,7 @@ The current release is 0.1.0.
 
 Report vulnerabilities through GitHub private vulnerability reporting:
 
-https://github.com/weugit/agentsmd-lint/security/advisories/new
+https://github.com/weugit/agentsmd-doctor/security/advisories/new
 
 Do not open a public issue for a security report.
 
@@ -23,7 +23,7 @@ The maintainer aims to acknowledge a report within 3 business days and to follow
 
 ## Scope
 
-agentsmd-lint reads local files and writes a report to stdout or stderr. It does not upload file contents, repository contents, or diagnostics anywhere.
+agentsmd-doctor reads local files and writes a report to stdout or stderr. It does not upload file contents, repository contents, or diagnostics anywhere.
 
 In scope:
 

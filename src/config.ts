@@ -3,7 +3,7 @@ import path from "node:path";
 import { toPosix } from "./discover.js";
 import type { Config, RuleSetting } from "./types.js";
 
-export const CONFIG_FILE_NAMES = [".agentsmd-lint.json", "agentsmd-lint.config.json"];
+export const CONFIG_FILE_NAMES = [".agentsmd-doctor.json", "agentsmd-doctor.config.json"];
 
 export const DEFAULT_CONFIG: Config = {
   rules: {},

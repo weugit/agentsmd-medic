@@ -1,12 +1,12 @@
-# agentsmd-lint
+# agentsmd-doctor
 
 Lint [AGENTS.md](https://agents.md) files: the instruction files AI coding agents read from a repository.
 
-[![CI](https://github.com/weugit/agentsmd-lint/actions/workflows/ci.yml/badge.svg)](https://github.com/weugit/agentsmd-lint/actions/workflows/ci.yml)
-[![npm version](https://img.shields.io/npm/v/agentsmd-lint)](https://www.npmjs.com/package/agentsmd-lint)
+[![CI](https://github.com/weugit/agentsmd-doctor/actions/workflows/ci.yml/badge.svg)](https://github.com/weugit/agentsmd-doctor/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/agentsmd-doctor)](https://www.npmjs.com/package/agentsmd-doctor)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-agentsmd-lint checks those instructions before an agent follows them. It flags empty files, broken links, paths and commands that are not in the repo, mixed package managers, unfinished placeholders, and credential-shaped strings. It is a TypeScript ESM CLI with no runtime dependencies.
+agentsmd-doctor checks those instructions before an agent follows them. It flags empty files, broken links, paths and commands that are not in the repo, mixed package managers, unfinished placeholders, and credential-shaped strings. It is a TypeScript ESM CLI with no runtime dependencies.
 
 The npm package is not published yet. See [Install](#install).
 
@@ -21,16 +21,16 @@ Stale paths, stale commands, leaked secrets, and contradictions do not fail the 
 After the package is on npm:
 
 ```bash
-npx agentsmd-lint
-npm install -D agentsmd-lint
+npx agentsmd-doctor
+npm install -D agentsmd-doctor
 ```
 
 It is not published yet. Until then, clone the repository and run the built CLI:
 
 ```bash
-git clone https://github.com/weugit/agentsmd-lint.git
-cd agentsmd-lint
-npm ci && npm run build && node bin/agentsmd-lint.js
+git clone https://github.com/weugit/agentsmd-doctor.git
+cd agentsmd-doctor
+npm ci && npm run build && node bin/agentsmd-doctor.js
 ```
 
 Node.js 20 or newer is required.
@@ -38,13 +38,13 @@ Node.js 20 or newer is required.
 ## Usage
 
 ```text
-agentsmd-lint [options] [path...]
+agentsmd-doctor [options] [path...]
 ```
 
 A path that is a file is linted directly. A path that is a directory is searched recursively for `AGENTS.md` and `AGENTS.override.md`. The default path is `.`.
 
 ```text
-agentsmd-lint doctor [options] [dir]
+agentsmd-doctor doctor [options] [dir]
 ```
 
 `doctor` reports which instruction files each agent actually loads for `dir` (default: the working directory). It walks from that directory up to the git root: the nearest ancestor that contains `.git`, or `dir` itself when there is none. Home-directory files (`~/.codex`, `~/.claude`, and similar) are not scanned. The first positional argument `doctor` selects the subcommand. A path such as `./doctor` is still linted.
@@ -63,7 +63,7 @@ Behaviors change as agents ship updates. The snapshot and the doc links live in 
 
 | Flag | Meaning |
 | --- | --- |
-| `-c, --config <file>` | Config file. When omitted, the working directory is searched for `.agentsmd-lint.json`, then `agentsmd-lint.config.json`. |
+| `-c, --config <file>` | Config file. When omitted, the working directory is searched for `.agentsmd-doctor.json`, then `agentsmd-doctor.config.json`. |
 | `--format <format>` | `text` (default), `json`, or `github`. |
 | `--json` | Alias for `--format json`. When both are set, the last one wins. |
 | `--max-warnings <n>` | Exit 1 when the warning count is greater than `<n>`. `<n>` is an integer ≥ 0. Without this flag, warnings do not change the exit code. |
@@ -84,11 +84,11 @@ Color defaults to on when stdout is a TTY and `NO_COLOR` is unset. `--color` and
 | --- | --- |
 | 0 | No errors, and warnings do not exceed `--max-warnings`. `doctor` exits 0 when the directory can be read, including when the report contains warnings. |
 | 1 | One or more errors, or more warnings than `--max-warnings`. |
-| 2 | Usage error, invalid config, or a path that does not exist. The message is written to stderr and prefixed with `agentsmd-lint: `. |
+| 2 | Usage error, invalid config, or a path that does not exist. The message is written to stderr and prefixed with `agentsmd-doctor: `. |
 
 ## Example output
 
-This report is the real output of `node bin/agentsmd-lint.js --no-color` in a temporary directory (exit code 1). The directory contained only the two files below.
+This report is the real output of `node bin/agentsmd-doctor.js --no-color` in a temporary directory (exit code 1). The directory contained only the two files below.
 
 `package.json`:
 
@@ -164,8 +164,8 @@ Discovery always skips these directory names: `.git`, `node_modules`, `.hg`, `.s
 
 Put one of these files in the working directory. The first match wins:
 
-1. `.agentsmd-lint.json`
-2. `agentsmd-lint.config.json`
+1. `.agentsmd-doctor.json`
+2. `agentsmd-doctor.config.json`
 
 ```json
 {
@@ -194,13 +194,13 @@ Pass `-c` / `--config` to use a different file. If that path cannot be read, the
 In an `AGENTS.md` file:
 
 ```text
-<!-- agentsmd-lint-disable -->
-<!-- agentsmd-lint-disable rule-a, rule-b -->
-<!-- agentsmd-lint-disable-next-line -->
-<!-- agentsmd-lint-disable-next-line rule-a, rule-b -->
+<!-- agentsmd-doctor-disable -->
+<!-- agentsmd-doctor-disable rule-a, rule-b -->
+<!-- agentsmd-doctor-disable-next-line -->
+<!-- agentsmd-doctor-disable-next-line rule-a, rule-b -->
 ```
 
-`agentsmd-lint-disable` disables every rule, or the named rules, for the whole file. `agentsmd-lint-disable-next-line` does the same for the next non-blank line. Comments inside fenced code blocks are not treated as directives, so an example in a fence does not silence a real finding.
+`agentsmd-doctor-disable` disables every rule, or the named rules, for the whole file. `agentsmd-doctor-disable-next-line` does the same for the next non-blank line. Comments inside fenced code blocks are not treated as directives, so an example in a fence does not silence a real finding.
 
 ## Use in CI
 
@@ -216,10 +216,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: weugit/agentsmd-lint@v0
+      - uses: weugit/agentsmd-doctor@v0
         with:
           path: .
-          # config: .agentsmd-lint.json
+          # config: .agentsmd-doctor.json
           # max-warnings: "0"   # -1, the default, does not fail on warnings
           format: github
           # version: "0.1.0"   # empty builds the checked-out action source
@@ -240,17 +240,17 @@ The same check after the package is published, without the action:
 - uses: actions/setup-node@v4
   with:
     node-version: 22
-- run: npx agentsmd-lint --format github
+- run: npx agentsmd-doctor --format github
 ```
 
-`npx agentsmd-lint` works only once the package is on npm. Until then, use the action with an empty `version`, or the clone-and-build install above.
+`npx agentsmd-doctor` works only once the package is on npm. Until then, use the action with an empty `version`, or the clone-and-build install above.
 
 ## Programmatic API
 
 The package is ESM. Import it after `npm run build`, or from the published package once that exists. Types are in `dist/index.d.ts`.
 
 ```js
-import { formatText, lint } from "agentsmd-lint";
+import { formatText, lint } from "agentsmd-doctor";
 
 const result = await lint({ cwd: process.cwd(), paths: ["."] });
 process.stdout.write(formatText(result, { color: false }));
@@ -267,7 +267,7 @@ if (result.errorCount > 0) process.exitCode = 1;
 | `formatGithub(result, cwd)` | GitHub Actions workflow commands. Paths are relative to `cwd`. |
 | `loadConfig(root, explicitPath?)` | Returns `{ config, path? }`. |
 | `DEFAULT_CONFIG` | `{ rules: {}, ignore: [], maxBytes: 32768, maxTokens: 8000 }`. |
-| `CONFIG_FILE_NAMES` | `[".agentsmd-lint.json", "agentsmd-lint.config.json"]`. |
+| `CONFIG_FILE_NAMES` | `[".agentsmd-doctor.json", "agentsmd-doctor.config.json"]`. |
 | `AGENT_FILE_NAMES` | `["AGENTS.md", "AGENTS.override.md"]`. |
 | `findAgentFiles(root, ignore?)` | Recursive discovery. |
 | `rules`, `ruleMap` | Built-in rules, in report order, and a map keyed by id. |
@@ -285,7 +285,7 @@ Types exported from the package include `Severity`, `RuleSetting`, `Diagnostic`,
 
 ## Roadmap
 
-`agentsmd-lint doctor` reports which instruction files Codex, Claude Code, Cursor, GitHub Copilot, and Gemini CLI load, including nested `AGENTS.md` files and `AGENTS.override.md`. See [Usage](#usage).
+`agentsmd-doctor doctor` reports which instruction files Codex, Claude Code, Cursor, GitHub Copilot, and Gemini CLI load, including nested `AGENTS.md` files and `AGENTS.override.md`. See [Usage](#usage).
 
 Not implemented yet:
 
@@ -297,7 +297,7 @@ Not implemented yet:
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, scripts, and how to add a rule. The code of conduct is [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md). Security reports go through [private advisories](https://github.com/weugit/agentsmd-lint/security/advisories/new) ([SECURITY.md](SECURITY.md)).
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, scripts, and how to add a rule. The code of conduct is [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md). Security reports go through [private advisories](https://github.com/weugit/agentsmd-doctor/security/advisories/new) ([SECURITY.md](SECURITY.md)).
 
 This repository's own [AGENTS.md](AGENTS.md) is linted in CI. `README.md` and `CONTRIBUTING.md` are not.
 

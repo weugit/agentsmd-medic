@@ -1,8 +1,8 @@
 # Release on version tags.
 #
 # npm publishing uses trusted publishing (OIDC). No NPM_TOKEN secret is used.
-# On npmjs.com, the agentsmd-lint package must list this trusted publisher:
-#   GitHub Actions, user weugit, repository agentsmd-lint,
+# On npmjs.com, the agentsmd-doctor package must list this trusted publisher:
+#   GitHub Actions, user weugit, repository agentsmd-doctor,
 #   workflow filename release.yml, no environment, npm publish allowed.
 # Trusted publishing needs npm CLI 11.5.1+ and Node.js 22.14+, so this job
 # uses Node.js 24 and upgrades npm. Provenance is generated automatically.
@@ -62,7 +62,7 @@ jobs:
         run: |
           set -euo pipefail
           # Force-move the major tag (v0 for 0.x, v1 for 1.x) onto this release
-          # so uses: weugit/agentsmd-lint@v0 follows the latest matching release.
+          # so uses: weugit/agentsmd-doctor@v0 follows the latest matching release.
           major="${GITHUB_REF_NAME%%.*}"
           git tag -f "${major}" "${GITHUB_SHA}"
           git push origin "refs/tags/${major}" --force
