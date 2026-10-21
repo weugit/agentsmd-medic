@@ -197,7 +197,7 @@ async function filesFromPaths(paths: string[], cwd: string, ignore: string[]): P
       info = await stat(resolved);
     } catch (err) {
       const code = errorCode(err);
-      if (code === "ENOENT" || code === "ENOTDIR") throw new Error(`Path not found: ${p}`);
+      if (code === "ENOENT" || code === "ENOTDIR") throw new Error(`Path not found: ${p}`, { cause: err });
       throw err;
     }
     if (info.isDirectory()) {
