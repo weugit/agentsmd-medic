@@ -1,0 +1,66 @@
+name: agentsmd-lint
+description: Lint AGENTS.md and AGENTS.override.md instruction files
+branding:
+  icon: check-square
+  color: blue
+
+inputs:
+  path:
+    description: File or directory to lint. A directory is searched recursively.
+    required: false
+    default: "."
+  config:
+    description: Config file. Leave empty to use .agentsmd-lint.json or agentsmd-lint.config.json in the working directory when one of those files exists.
+    required: false
+    default: ""
+  max-warnings:
+    description: Fail when the warning count is greater than this integer. -1 means unlimited, and warnings do not fail the run.
+    required: false
+    default: "-1"
+  format:
+    description: "Output format: text, json, or github."
+    required: false
+    default: github
+  version:
+    description: npm version to run, such as 0.1.0. Leave empty to install and build this action's checked-out source.
+    required: false
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: "22"
+
+    - name: Install and build agentsmd-lint
+      if: ${{ inputs.version == '' }}
+      shell: bash
+      run: |
+        npm ci --prefix "$GITHUB_ACTION_PATH"
+        npm run build --prefix "$GITHUB_ACTION_PATH"
+
+    - name: Lint AGENTS.md files
+      shell: bash
+      env:
+        INPUT_PATH: ${{ inputs.path }}
+        INPUT_CONFIG: ${{ inputs.config }}
+        INPUT_MAX_WARNINGS: ${{ inputs.max-warnings }}
+        INPUT_FORMAT: ${{ inputs.format }}
+        INPUT_VERSION: ${{ inputs.version }}
+      run: |
+        set -euo pipefail
+        args=()
+        if [[ -n "${INPUT_CONFIG}" ]]; then
+          args+=(--config "${INPUT_CONFIG}")
+        fi
+        if [[ "${INPUT_MAX_WARNINGS}" != "-1" ]]; then
+          args+=(--max-warnings "${INPUT_MAX_WARNINGS}")
+        fi
+        args+=(--format "${INPUT_FORMAT}")
+        if [[ -z "${INPUT_VERSION}" ]]; then
+          node "${GITHUB_ACTION_PATH}/bin/agentsmd-lint.js" "${args[@]}" -- "${INPUT_PATH}"
+        else
+          npx --yes "agentsmd-lint@${INPUT_VERSION}" "${args[@]}" -- "${INPUT_PATH}"
+        fi

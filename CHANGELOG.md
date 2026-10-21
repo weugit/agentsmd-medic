@@ -1,0 +1,25 @@
+# Changelog
+
+All notable changes to this project are documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+## [0.1.0] - 2026-10-21
+
+### Added
+
+- Command-line linter for `AGENTS.md` and `AGENTS.override.md`. A file path is linted directly. A directory is searched recursively. The default path is `.`.
+- Rules: `no-empty-file`, `require-heading`, `max-size`, `no-empty-section`, `no-duplicate-heading`, `no-placeholder`, `no-broken-links`, `no-missing-paths`, `no-missing-scripts`, `no-secrets`, and `consistent-package-manager`.
+- Config files `.agentsmd-lint.json` and `agentsmd-lint.config.json` with `rules`, `ignore`, `maxBytes`, and `maxTokens`.
+- Inline `agentsmd-lint-disable` and `agentsmd-lint-disable-next-line` comments. Comments inside fenced code blocks are ignored.
+- Output formats `text` (optional color), `json`, and `github` (GitHub Actions workflow commands).
+- Exit codes: 0 clean, 1 findings, 2 usage error, invalid config, or a missing path.
+- Programmatic API (`lint`, `lintFiles`, `lintText`, formatters, config loading, and the rule list).
+- Composite GitHub Action (`action.yml`) that lints the caller repository.
+- Zero runtime dependencies. Node.js 20 or newer.
+
+[Unreleased]: https://github.com/weugit/agentsmd-lint/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/weugit/agentsmd-lint/releases/tag/v0.1.0

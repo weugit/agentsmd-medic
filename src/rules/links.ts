@@ -40,7 +40,9 @@ export const noBrokenLinks: Rule = {
       }
       const resolved = decoded.startsWith("/") ? path.join(root, decoded) : path.resolve(path.dirname(file), decoded);
       if (!pathExists(resolved)) {
-        out.push({ message: `Broken link: "${target}" (resolved to ${path.relative(root, resolved) || "."}) does not exist.`, line: link.line, column: link.column });
+        const shown = path.relative(root, resolved) || ".";
+        const where = shown === target ? "" : ` (resolved to ${shown})`;
+        out.push({ message: `Broken link: "${target}"${where} does not exist.`, line: link.line, column: link.column });
         continue;
       }
       if (anchor) {

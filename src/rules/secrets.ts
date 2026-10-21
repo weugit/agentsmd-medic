@@ -61,6 +61,52 @@ function message(kind: string, value: string): string {
   return `Possible ${kind} found ("${value.slice(0, 4)}…"); remove it and rotate the credential.`;
 }
 
+interface Hit {
+  start: number;
+  end: number;
+  /** False for the generic `key=value` assignment detector. */
+  specific: boolean;
+  finding: Finding;
+}
+
+/**
+ * One finding per overlapping span. Specific detectors are kept ahead of the
+ * generic assignment pattern, so `OPENAI_API_KEY=sk-proj-...` is reported as
+ * an OpenAI key and not also as a generic API key.
+ */
+function findingsOnLine(line: string, lineNo: number): Finding[] {
+  const hits: Hit[] = [];
+  for (const detector of DETECTORS) {
+    const specific = detector.kindFrom === undefined;
+    detector.re.lastIndex = 0;
+    for (const match of line.matchAll(detector.re)) {
+      const group = detector.valueGroup ?? 0;
+      const value = match[group];
+      if (!value || isPlaceholder(value)) continue;
+      const start = match.index ?? 0;
+      hits.push({
+        start,
+        end: start + match[0].length,
+        specific,
+        finding: {
+          message: message(detector.kindFrom?.(match) ?? detector.kind, value),
+          line: lineNo,
+          column: start + 1,
+        },
+      });
+    }
+  }
+
+  hits.sort((a, b) => Number(b.specific) - Number(a.specific) || a.start - b.start || a.end - b.end);
+  const kept: Hit[] = [];
+  for (const hit of hits) {
+    if (kept.some((prev) => hit.start < prev.end && prev.start < hit.end)) continue;
+    kept.push(hit);
+  }
+  kept.sort((a, b) => a.start - b.start);
+  return kept.map((hit) => hit.finding);
+}
+
 export const noSecrets: Rule = {
   id: "no-secrets",
   description: "Instruction files must not embed credentials or secret tokens.",
@@ -68,19 +114,7 @@ export const noSecrets: Rule = {
   check({ doc }) {
     const out: Finding[] = [];
     doc.lines.forEach((line, i) => {
-      for (const detector of DETECTORS) {
-        detector.re.lastIndex = 0;
-        for (const match of line.matchAll(detector.re)) {
-          const group = detector.valueGroup ?? 0;
-          const value = match[group];
-          if (!value || isPlaceholder(value)) continue;
-          out.push({
-            message: message(detector.kindFrom?.(match) ?? detector.kind, value),
-            line: i + 1,
-            column: (match.index ?? 0) + 1,
-          });
-        }
-      }
+      out.push(...findingsOnLine(line, i + 1));
     });
     return out;
   },

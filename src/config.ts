@@ -22,7 +22,7 @@ export function validateConfig(raw: unknown, source: string): Partial<Config> {
   const obj = raw as Record<string, unknown>;
   const out: Partial<Config> = {};
   if (obj.rules !== undefined) {
-    if (typeof obj.rules !== "object" || obj.rules === null) throw new ConfigError(`${source}: "rules" must be an object`);
+    if (typeof obj.rules !== "object" || obj.rules === null || Array.isArray(obj.rules)) throw new ConfigError(`${source}: "rules" must be an object`);
     out.rules = {};
     for (const [k, v] of Object.entries(obj.rules)) {
       if (!SETTINGS.includes(v as RuleSetting)) throw new ConfigError(`${source}: rule "${k}" must be one of ${SETTINGS.join(", ")}`);

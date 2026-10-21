@@ -1,0 +1,61 @@
+name: New rule
+description: Propose a lint rule for AGENTS.md files
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A rule should catch instructions that would send an agent at a stale path, a missing command, a contradiction, or a leaked secret. Describe the finding so someone can implement it without guessing.
+
+        Suggested label: `rule`.
+  - type: input
+    id: rule-id
+    attributes:
+      label: Proposed rule id
+      description: Lowercase words separated by hyphens, for example heading-increment.
+      placeholder: heading-increment
+    validations:
+      required: true
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Suggested default severity
+      options:
+        - warn
+        - error
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What it should catch
+      description: The bad instruction, and why an agent would misbehave if it followed that text.
+    validations:
+      required: true
+  - type: textarea
+    id: bad-example
+    attributes:
+      label: Example that should fail
+      render: markdown
+    validations:
+      required: true
+  - type: textarea
+    id: good-example
+    attributes:
+      label: Example that should pass
+      render: markdown
+    validations:
+      required: true
+  - type: textarea
+    id: false-positives
+    attributes:
+      label: Cases that should not be flagged
+      description: Code blocks, placeholders, external URLs, or other text the rule should skip.
+    validations:
+      required: false
+  - type: textarea
+    id: notes
+    attributes:
+      label: Implementation notes
+      description: Relevant files, such as src/rules/index.ts, or an existing rule to mirror.
+    validations:
+      required: false
