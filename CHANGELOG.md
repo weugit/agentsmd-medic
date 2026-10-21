@@ -7,7 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-10-21
+
 ### Changed
+
+- Releases are published to npm from GitHub Actions with trusted publishing (OIDC) and provenance.
 
 - Renamed the project from `agentsmd-lint` to `agentsmd-medic`: the npm package, the CLI command, the repository (`weugit/agentsmd-medic`), the GitHub Action (`uses: weugit/agentsmd-medic@v0`), the config files (`.agentsmd-medic.json`, `agentsmd-medic.config.json`), and the inline `agentsmd-medic-disable` comments. The 0.1.0 release was never published to npm under the old name.
 
@@ -30,5 +34,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Composite GitHub Action (`action.yml`) that lints the caller repository.
 - Zero runtime dependencies. Node.js 20 or newer.
 
-[Unreleased]: https://github.com/weugit/agentsmd-medic/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/weugit/agentsmd-medic/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/weugit/agentsmd-medic/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/weugit/agentsmd-medic/releases/tag/v0.1.0
