@@ -6,7 +6,7 @@ By participating you agree to the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## Setup
 
-Install Node.js 20 or newer, then:
+Install Node.js 22.12 or newer, then:
 
 ```bash
 git clone https://github.com/weugit/agentsmd-medic.git

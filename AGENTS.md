@@ -4,7 +4,7 @@ agentsmd-medic checks AGENTS.md and AGENTS.override.md files. Those files are th
 
 ## Overview
 
-The package is a TypeScript ESM command-line tool with no runtime dependencies. It discovers instruction files, parses a small subset of Markdown, and runs the rules registered in `src/rules/index.ts`. Node.js 20 or newer is required. The `engines` field in `package.json` says so.
+The package is a TypeScript ESM command-line tool with no runtime dependencies. It discovers instruction files, parses a small subset of Markdown, and runs the rules registered in `src/rules/index.ts`. Node.js 22.12 or newer is required. The `engines` field in `package.json` says so.
 
 OpenAI Codex, Cursor, GitHub Copilot, Jules, and Aider read AGENTS.md. Codex reads one file per directory from the git root down to the working directory: AGENTS.override.md if that directory has one, otherwise AGENTS.md. It concatenates those files from the root toward the leaf. Codex caps project docs at 32 KiB by default (`project_doc_max_bytes`). The `max-size` rule uses that byte limit. Its token estimate counts each Han, Hiragana, Katakana, Hangul, and fullwidth character as one token and counts other text as characters divided by 4.
 

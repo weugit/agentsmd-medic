@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Breaking:** Dropped support for Node.js 20. The minimum supported version is now Node.js 22.12 (`engines.node` is `>=22.12.0`), and CI no longer tests Node 20.
+
 ## [0.1.1] - 2026-10-21
 
 ### Changed
