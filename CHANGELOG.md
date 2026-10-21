@@ -7,9 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-21
+
 ### Changed
 
 - **Breaking:** Dropped support for Node.js 20. The minimum supported version is now Node.js 22.12 (`engines.node` is `>=22.12.0`), and CI no longer tests Node 20.
+- Upgraded development-only dependencies, with no runtime or published-API impact: ESLint 10 (`eslint` 10.13 and `@eslint/js` 10.0), Vitest 5 (5.0.5), and `@types/node` 26 (26.6.5). Source code was adjusted for the new ESLint recommended rules (`preserve-caught-error` now attaches the original error as `cause` on the "Path not found" error).
 
 ## [0.1.1] - 2026-10-21
 
@@ -38,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Composite GitHub Action (`action.yml`) that lints the caller repository.
 - Zero runtime dependencies. Node.js 20 or newer.
 
-[Unreleased]: https://github.com/weugit/agentsmd-medic/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/weugit/agentsmd-medic/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/weugit/agentsmd-medic/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/weugit/agentsmd-medic/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/weugit/agentsmd-medic/releases/tag/v0.1.0
