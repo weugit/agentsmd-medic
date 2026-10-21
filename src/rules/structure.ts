@@ -25,7 +25,7 @@ export const maxSize: Rule = {
   description: "Keep the file within the size agents actually read.",
   defaultSeverity: "warn",
   check({ doc, config }) {
-    const out = [];
+    const out: { message: string; line: number; column: number }[] = [];
     const bytes = Buffer.byteLength(doc.source, "utf8");
     if (bytes > config.maxBytes) {
       out.push({
@@ -51,7 +51,7 @@ export const noEmptySection: Rule = {
   description: "Headings should be followed by content before the next heading of the same or higher level.",
   defaultSeverity: "warn",
   check({ doc }) {
-    const out = [];
+    const out: { message: string; line: number; column: number }[] = [];
     const { headings, lines } = doc;
     for (let i = 0; i < headings.length; i++) {
       const h = headings[i]!;
@@ -80,7 +80,7 @@ export const noDuplicateHeading: Rule = {
   description: "Sibling sections should not share a heading; duplicated sections often carry conflicting instructions.",
   defaultSeverity: "warn",
   check({ doc }) {
-    const out = [];
+    const out: { message: string; line: number; column: number }[] = [];
     const seen = new Map<string, number>();
     const stack: string[] = [];
     for (const h of doc.headings) {
@@ -106,7 +106,7 @@ export const noPlaceholder: Rule = {
   description: "Flag unfinished placeholder text (TODO, TBD, lorem ipsum, <insert ...>).",
   defaultSeverity: "warn",
   check({ doc }) {
-    const out = [];
+    const out: { message: string; line: number; column: number }[] = [];
     doc.lines.forEach((line, i) => {
       if (doc.codeBlockLines.has(i + 1)) return;
       const m = PLACEHOLDER.exec(line);
