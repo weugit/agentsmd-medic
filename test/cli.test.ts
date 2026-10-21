@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { main } from "../src/cli.js";
+import { toPosix } from "../src/discover.js";
 import { rules } from "../src/rules/index.js";
 import { tempDir, writeTree } from "./helpers.js";
 
@@ -232,7 +233,8 @@ describe("main", () => {
     const parsed = JSON.parse(json.text().stdout) as { version: number; command: string; directory: string; agents: { id: string }[] };
     expect(parsed.version).toBe(1);
     expect(parsed.command).toBe("doctor");
-    expect(parsed.directory).toBe(cwd);
+    expect(parsed.directory).toBe(toPosix(cwd));
+    expect(parsed.directory.includes("\\")).toBe(false);
     expect(parsed.agents.map((item) => item.id)).toEqual(["codex", "claude", "cursor", "copilot", "gemini"]);
   });
 

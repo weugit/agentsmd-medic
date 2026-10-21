@@ -1,10 +1,24 @@
 import path from "node:path";
 import { readFileSync } from "node:fs";
+import { toPosix } from "../discover.js";
 import { parseMarkdown } from "../markdown.js";
 import type { Rule } from "../types.js";
 import { pathExists } from "./util.js";
 
 const EXTERNAL = /^(?:[a-z][a-z0-9+.-]*:|\/\/)/i;
+
+/** Repo-root link (`/docs/a.md`). A leading slash is absolute on both POSIX and Windows. */
+function resolveLink(root: string, file: string, decoded: string): string {
+  if (decoded.startsWith("/") || decoded.startsWith("\\")) {
+    const parts = decoded.replaceAll("\\", "/").split("/").filter((part) => part.length > 0);
+    return path.resolve(root, ...parts);
+  }
+  return path.resolve(path.dirname(file), decoded);
+}
+
+function displayResolved(root: string, resolved: string): string {
+  return toPosix(path.relative(root, resolved) || ".");
+}
 
 function anchorsOf(file: string): Set<string> | undefined {
   if (!/\.(md|markdown|mdx)$/i.test(file)) return undefined;
@@ -38,9 +52,9 @@ export const noBrokenLinks: Rule = {
         }
         continue;
       }
-      const resolved = decoded.startsWith("/") ? path.join(root, decoded) : path.resolve(path.dirname(file), decoded);
+      const resolved = resolveLink(root, file, decoded);
       if (!pathExists(resolved)) {
-        const shown = path.relative(root, resolved) || ".";
+        const shown = displayResolved(root, resolved);
         const where = shown === target ? "" : ` (resolved to ${shown})`;
         out.push({ message: `Broken link: "${target}"${where} does not exist.`, line: link.line, column: link.column });
         continue;
@@ -48,7 +62,7 @@ export const noBrokenLinks: Rule = {
       if (anchor) {
         const anchors = anchorsOf(resolved);
         if (anchors && !anchors.has(anchor.toLowerCase())) {
-          out.push({ message: `Anchor "#${anchor}" not found in ${path.relative(root, resolved)}.`, line: link.line, column: link.column });
+          out.push({ message: `Anchor "#${anchor}" not found in ${displayResolved(root, resolved)}.`, line: link.line, column: link.column });
         }
       }
     }

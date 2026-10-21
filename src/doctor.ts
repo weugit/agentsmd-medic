@@ -10,7 +10,7 @@ import {
   agentInfo,
   type AgentInfo,
 } from "./agents.js";
-import { SKIP_DIRECTORY_NAMES, toPosix } from "./discover.js";
+import { SKIP_DIRECTORY_NAMES, escapesRoot, toPosix } from "./discover.js";
 
 const RESET = "\u001b[0m";
 const BOLD = "\u001b[1m";
@@ -99,7 +99,7 @@ export function directoriesFromRoot(root: string, dir: string): string[] {
   const absRoot = path.resolve(root);
   const absDir = path.resolve(dir);
   const rel = path.relative(absRoot, absDir);
-  if (rel.startsWith("..") || path.isAbsolute(rel)) return [absDir];
+  if (escapesRoot(rel)) return [absDir];
   const dirs = [absRoot];
   let current = absRoot;
   for (const part of rel.split(path.sep)) {
@@ -483,6 +483,18 @@ export async function diagnose(dir: string, displayPath = dir): Promise<DoctorRe
   return { version: 1, command: "doctor", directory, root, agents };
 }
 
+function displayReport(report: DoctorReport): DoctorReport {
+  return {
+    ...report,
+    directory: toPosix(report.directory),
+    root: toPosix(report.root),
+    agents: report.agents.map((agent) => ({
+      ...agent,
+      files: agent.files.map((file) => ({ ...file, path: toPosix(file.path) })),
+    })),
+  };
+}
+
 function fileLine(file: DoctorFile): string {
   const note = file.note ? `, ${file.note}` : "";
   return `    ${file.path} (${file.bytes} bytes${note})`;
@@ -491,13 +503,14 @@ function fileLine(file: DoctorFile): string {
 /** Human report grouped by agent. ✔ and ⚠ are colored when `color` is set. */
 export function formatDoctorText(report: DoctorReport, options: { color?: boolean } = {}): string {
   const color = options.color ?? false;
+  const shown = displayReport(report);
   const lines: string[] = [
-    `Directory: ${report.directory}`,
-    `Repo root: ${report.root}`,
+    `Directory: ${shown.directory}`,
+    `Repo root: ${shown.root}`,
     "Home-directory instruction files are not scanned.",
     "",
   ];
-  for (const agent of report.agents) {
+  for (const agent of shown.agents) {
     lines.push(paint(agent.name, BOLD, color));
     for (const note of agent.notes) lines.push(`  ${paint("✔", GREEN, color)} ${note}`);
     for (const warning of agent.warnings) lines.push(`  ${paint("⚠", YELLOW, color)} ${warning}`);
@@ -509,5 +522,5 @@ export function formatDoctorText(report: DoctorReport, options: { color?: boolea
 
 /** Stable JSON document (`version` 1). */
 export function formatDoctorJson(report: DoctorReport): string {
-  return JSON.stringify(report, null, 2);
+  return JSON.stringify(displayReport(report), null, 2);
 }

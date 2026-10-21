@@ -1,7 +1,20 @@
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { CLAUDE_AGENTS_IGNORED, CLAUDE_LOCAL_WARNING, CODEX_PROJECT_DOC_MAX_BYTES, CURSOR_LEGACY_WARNING, GEMINI_ONLY_AGENTS_WARNING } from "../src/agents.js";
-import { agentsMdImportSpec, claudeFileImportsAgentsMd, diagnose, findGitRoot, formatDoctorJson, formatDoctorText } from "../src/doctor.js";
+import {
+  agentsMdImportSpec,
+  claudeFileImportsAgentsMd,
+  diagnose,
+  findGitRoot,
+  formatDoctorJson,
+  formatDoctorText,
+  type DoctorReport,
+} from "../src/doctor.js";
 import { tempDir, writeTree } from "./helpers.js";
+
+function at(root: string, rel: string): string {
+  return path.join(root, ...rel.split("/"));
+}
 
 const agents = "# Notes\n\nRun the tests.\n";
 
@@ -43,10 +56,10 @@ describe("diagnose", () => {
       "other/AGENTS.md": "# Sibling\n\nNot on the path.\n",
       "node_modules/AGENTS.md": "# Dep\n\nSkip.\n",
     });
-    const report = await diagnose(`${root}/pkg`);
+    const report = await diagnose(`${at(root, "pkg")}`);
     expect(report.root).toBe(root);
-    expect(report.directory).toBe(`${root}/pkg`);
-    expect(findGitRoot(`${root}/pkg`)).toBe(root);
+    expect(report.directory).toBe(`${at(root, "pkg")}`);
+    expect(findGitRoot(`${at(root, "pkg")}`)).toBe(root);
     const codex = agent(report, "codex");
     expect(codex.files.map((file) => file.path)).toEqual(["AGENTS.override.md", "pkg/AGENTS.override.md"]);
     expect(codex.warnings).toEqual([]);
@@ -68,7 +81,7 @@ describe("diagnose", () => {
   it("treats a .git file as the repo root", async () => {
     const root = await tempDir();
     await writeTree(root, { ".git": "gitdir: /elsewhere\n", "nested/AGENTS.md": agents });
-    const report = await diagnose(`${root}/nested`);
+    const report = await diagnose(`${at(root, "nested")}`);
     expect(report.root).toBe(root);
     expect(agent(report, "codex").files.map((file) => file.path)).toEqual(["nested/AGENTS.md"]);
   });
@@ -104,7 +117,7 @@ describe("diagnose", () => {
       "pkg/CLAUDE.md": "# Claude\n\n```\n@AGENTS.md\n```\n\nNo real import.\n",
       "pkg/CLAUDE.local.md": "@AGENTS.md\n",
     });
-    const report = await diagnose(`${root}/pkg`);
+    const report = await diagnose(`${at(root, "pkg")}`);
     const claude = agent(report, "claude");
     expect(claude.warnings).toContain(CLAUDE_AGENTS_IGNORED);
     expect(claude.warnings).toContain(CLAUDE_LOCAL_WARNING);
@@ -112,7 +125,7 @@ describe("diagnose", () => {
     expect(claude.files.find((file) => file.path === "AGENTS.md")?.loaded).toBe(false);
 
     await writeTree(root, { "pkg/CLAUDE.md": "# Claude\n\n@../AGENTS.md\n" });
-    const imported = agent(await diagnose(`${root}/pkg`), "claude");
+    const imported = agent(await diagnose(`${at(root, "pkg")}`), "claude");
     expect(imported.warnings).not.toContain(CLAUDE_AGENTS_IGNORED);
     expect(imported.warnings).toContain(CLAUDE_LOCAL_WARNING);
     expect(imported.notes.some((note) => note.includes("imports AGENTS.md"))).toBe(true);
@@ -147,7 +160,7 @@ describe("diagnose", () => {
       "pkg/.cursor/rules/local.mdc": "# Local\n",
       "other/.cursor/rules/skip.mdc": "# Skip\n",
     });
-    const cursor = agent(await diagnose(`${root}/pkg`), "cursor");
+    const cursor = agent(await diagnose(`${at(root, "pkg")}`), "cursor");
     expect(cursor.warnings).toEqual([CURSOR_LEGACY_WARNING]);
     expect(cursor.files.map((file) => file.path)).toEqual([
       ".cursorrules",
@@ -171,7 +184,7 @@ describe("diagnose", () => {
       "pkg/.github/copilot-instructions.md": "# Pkg\n",
       "other/.github/copilot-instructions.md": "# Other\n",
     });
-    const copilot = agent(await diagnose(`${root}/pkg`), "copilot");
+    const copilot = agent(await diagnose(`${at(root, "pkg")}`), "copilot");
     expect(copilot.warnings).toEqual([]);
     expect(copilot.files.map((file) => file.path)).toEqual([
       "AGENTS.md",
@@ -213,7 +226,7 @@ describe("diagnose", () => {
     expect(atRoot.notes[0]).toContain("context.fileName in .gemini/settings.json is AGENTS.md");
     expect(atRoot.files.find((file) => file.path === "AGENTS.md")?.loaded).toBe(true);
 
-    const closer = agent(await diagnose(`${root}/pkg`), "gemini");
+    const closer = agent(await diagnose(`${at(root, "pkg")}`), "gemini");
     expect(closer.notes[0]).toContain("pkg/.gemini/settings.json is GEMINI.md");
     expect(closer.warnings).toContain(GEMINI_ONLY_AGENTS_WARNING);
   });
@@ -247,10 +260,41 @@ describe("diagnose", () => {
     expect(colored).toContain("\u001b[1mOpenAI Codex");
     expect(colored).toContain(CLAUDE_AGENTS_IGNORED);
 
-    const parsed = JSON.parse(formatDoctorJson(report)) as { version: number; command: string; agents: { id: string; docsUrl: string }[] };
+    const parsed = JSON.parse(formatDoctorJson(report)) as { version: number; command: string; directory: string; root: string; agents: { id: string; docsUrl: string }[] };
     expect(parsed.version).toBe(1);
     expect(parsed.command).toBe("doctor");
+    expect(parsed.directory).toBe(report.directory.split(path.sep).join("/"));
+    expect(parsed.root).toBe(report.root.split(path.sep).join("/"));
     expect(parsed.agents.map((item) => item.id)).toEqual(["codex", "claude", "cursor", "copilot", "gemini"]);
     for (const item of parsed.agents) expect(item.docsUrl).toMatch(/^https:\/\//);
+    expect(plain).toContain(`Directory: ${parsed.directory}`);
+    expect(plain).toContain(`Repo root: ${parsed.root}`);
+  });
+
+  it("prints Windows-style absolute paths with forward slashes", () => {
+    const report: DoctorReport = {
+      version: 1,
+      command: "doctor",
+      directory: "C:\\repo\\pkg",
+      root: "C:\\repo",
+      agents: [
+        {
+          id: "codex",
+          name: "OpenAI Codex",
+          docsUrl: "https://example.com",
+          status: "ok",
+          files: [{ path: "pkg\\AGENTS.md", bytes: 4, role: "codex-project-doc", loaded: true }],
+          notes: [],
+          warnings: [],
+        },
+      ],
+    };
+    expect(formatDoctorText(report)).toContain("Directory: C:/repo/pkg");
+    expect(formatDoctorText(report)).toContain("Repo root: C:/repo");
+    expect(formatDoctorText(report)).toContain("pkg/AGENTS.md");
+    const parsed = JSON.parse(formatDoctorJson(report)) as { directory: string; root: string; agents: { files: { path: string }[] }[] };
+    expect(parsed.directory).toBe("C:/repo/pkg");
+    expect(parsed.root).toBe("C:/repo");
+    expect(parsed.agents[0]?.files[0]?.path).toBe("pkg/AGENTS.md");
   });
 });

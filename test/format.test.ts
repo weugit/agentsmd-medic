@@ -1,7 +1,15 @@
 import path from "node:path";
 import { describe, expect, it } from "vitest";
+import { toPosix } from "../src/discover.js";
 import { formatGithub, formatJson, formatText } from "../src/format.js";
 import type { Diagnostic, FileResult, LintResult } from "../src/types.js";
+
+/** Absolute repo root. `/repo` is drive-absolute on Windows; pin a drive so relatives stay stable. */
+const ROOT = process.platform === "win32" ? "C:\\repo" : "/repo";
+
+function abs(...parts: string[]): string {
+  return path.join(ROOT, ...parts);
+}
 
 function diagnostic(over: Partial<Diagnostic> & Pick<Diagnostic, "ruleId" | "severity" | "message">): Diagnostic {
   return { line: 1, column: 1, ...over };
@@ -11,7 +19,7 @@ function file(over: Partial<FileResult> & Pick<FileResult, "relativePath" | "dia
   const errorCount = over.errorCount ?? over.diagnostics.filter((item) => item.severity === "error").length;
   const warningCount = over.warningCount ?? over.diagnostics.filter((item) => item.severity === "warn").length;
   return {
-    file: over.file ?? path.join("/repo", over.relativePath),
+    file: over.file ?? path.join(ROOT, ...over.relativePath.split(/[\\/]/)),
     relativePath: over.relativePath,
     diagnostics: over.diagnostics,
     errorCount,
@@ -21,7 +29,7 @@ function file(over: Partial<FileResult> & Pick<FileResult, "relativePath" | "dia
 
 function result(files: FileResult[]): LintResult {
   return {
-    root: "/repo",
+    root: ROOT,
     files,
     errorCount: files.reduce((count, item) => count + item.errorCount, 0),
     warningCount: files.reduce((count, item) => count + item.warningCount, 0),
@@ -143,7 +151,7 @@ describe("formatJson", () => {
     const output = formatJson(
       result([
         file({
-          file: "/repo/pkg/AGENTS.md",
+          file: abs("pkg", "AGENTS.md"),
           relativePath: "pkg/AGENTS.md",
           diagnostics: [diagnostic({ ruleId: "no-secrets", severity: "error", message: "Possible key.", line: 2, column: 4 })],
         }),
@@ -151,7 +159,7 @@ describe("formatJson", () => {
     );
     expect(JSON.parse(output)).toEqual({
       version: 1,
-      root: "/repo",
+      root: toPosix(ROOT),
       errorCount: 1,
       warningCount: 0,
       files: [
@@ -166,6 +174,15 @@ describe("formatJson", () => {
     expect(output).toContain('\n  "version": 1');
     expect(output.endsWith("\n")).toBe(false);
   });
+
+  it("prints Windows-style paths with forward slashes", () => {
+    const output = formatJson({
+      ...result([]),
+      root: "C:\\repo\\app",
+      files: [file({ relativePath: "pkg\\AGENTS.md", diagnostics: [] })],
+    });
+    expect(JSON.parse(output)).toMatchObject({ root: "C:/repo/app", files: [{ path: "pkg/AGENTS.md" }] });
+  });
 });
 
 describe("formatGithub", () => {
@@ -173,7 +190,7 @@ describe("formatGithub", () => {
     const output = formatGithub(
       result([
         file({
-          file: "/repo/AGENTS.md",
+          file: abs("AGENTS.md"),
           relativePath: "AGENTS.md",
           diagnostics: [
             diagnostic({ ruleId: "no-empty-file", severity: "error", message: "Empty." }),
@@ -181,7 +198,7 @@ describe("formatGithub", () => {
           ],
         }),
       ]),
-      "/repo",
+      ROOT,
     );
     expect(output).toBe(
       ["::error file=AGENTS.md,line=1,col=1,title=agentsmd-lint (no-empty-file)::Empty.", "::warning file=AGENTS.md,line=3,col=2,title=agentsmd-lint (no-placeholder)::Todo."].join(
@@ -194,12 +211,12 @@ describe("formatGithub", () => {
     const output = formatGithub(
       result([
         file({
-          file: "/repo/name:with,comma.md",
+          file: abs("name:with,comma.md"),
           relativePath: "name:with,comma.md",
           diagnostics: [diagnostic({ ruleId: "no-secrets", severity: "error", message: "100% done\r\nnext, still %0A", line: 2, column: 3 })],
         }),
       ]),
-      "/repo",
+      ROOT,
     );
     expect(output).toBe(
       "::error file=name%3Awith%2Ccomma.md,line=2,col=3,title=agentsmd-lint (no-secrets)::100%25 done%0D%0Anext, still %250A",
@@ -207,20 +224,20 @@ describe("formatGithub", () => {
   });
 
   it("returns an empty string when there are no diagnostics", () => {
-    expect(formatGithub(result([file({ relativePath: "AGENTS.md", diagnostics: [] })]), "/repo")).toBe("");
-    expect(formatGithub(result([]), "/repo")).toBe("");
+    expect(formatGithub(result([file({ relativePath: "AGENTS.md", diagnostics: [] })]), ROOT)).toBe("");
+    expect(formatGithub(result([]), ROOT)).toBe("");
   });
 
   it("uses a path relative to the given cwd", () => {
     const output = formatGithub(
       result([
         file({
-          file: "/repo/pkg/AGENTS.md",
+          file: abs("pkg", "AGENTS.md"),
           relativePath: "ignored.md",
           diagnostics: [diagnostic({ ruleId: "no-empty-file", severity: "error", message: "Empty." })],
         }),
       ]),
-      "/repo",
+      ROOT,
     );
     expect(output.startsWith("::error file=pkg/AGENTS.md,")).toBe(true);
   });

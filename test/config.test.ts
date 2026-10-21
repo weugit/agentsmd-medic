@@ -1,6 +1,7 @@
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { CONFIG_FILE_NAMES, ConfigError, DEFAULT_CONFIG, loadConfig } from "../src/config.js";
+import { ConfigError, CONFIG_FILE_NAMES, DEFAULT_CONFIG, loadConfig } from "../src/config.js";
+import { toPosix } from "../src/discover.js";
 import { tempDir, writeTree } from "./helpers.js";
 
 describe("loadConfig", () => {
@@ -74,7 +75,7 @@ describe("loadConfig", () => {
     await writeTree(root, { ".agentsmd-lint.json": "{ not json" });
     await expect(loadConfig(root)).rejects.toThrow(ConfigError);
     await expect(loadConfig(root)).rejects.toThrow(/invalid JSON/);
-    await expect(loadConfig(root, file)).rejects.toThrow(file);
+    await expect(loadConfig(root, file)).rejects.toThrow(toPosix(file));
   });
 
   it("throws ConfigError for an invalid rule setting", async () => {
@@ -103,7 +104,7 @@ describe("loadConfig", () => {
     const root = await tempDir();
     const missing = path.join(root, "missing.json");
     await expect(loadConfig(root, missing)).rejects.toThrow(ConfigError);
-    await expect(loadConfig(root, missing)).rejects.toThrow(/Cannot read config file/);
+    await expect(loadConfig(root, missing)).rejects.toThrow(new RegExp(`Cannot read config file ${toPosix(missing).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`));
   });
 
   it("throws ConfigError when the document is not an object", async () => {

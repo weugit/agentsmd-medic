@@ -1,5 +1,6 @@
 import { existsSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
+import { escapesRoot } from "../discover.js";
 import type { ParsedDoc } from "../types.js";
 
 export interface CommandRef {
@@ -40,7 +41,7 @@ export function findUp(name: string, dir: string, root: string): string | undefi
     if (existsSync(candidate)) return candidate;
     if (current === root || path.dirname(current) === current) return undefined;
     const rel = path.relative(root, current);
-    if (rel.startsWith("..")) return undefined;
+    if (escapesRoot(rel)) return undefined;
     current = path.dirname(current);
   }
 }

@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
+import { escapesRoot, toPosix } from "../discover.js";
 import type { Rule } from "../types.js";
 import { extractCommands, findUp, readJson } from "./util.js";
 
@@ -189,7 +190,7 @@ function makefileTargets(file: string): Set<string> | undefined {
 
 function displayPath(root: string, file: string): string {
   const rel = path.relative(root, file);
-  return (rel.startsWith("..") ? file : rel).split(path.sep).join("/");
+  return toPosix(escapesRoot(rel) ? file : rel);
 }
 
 export const noMissingScripts: Rule = {

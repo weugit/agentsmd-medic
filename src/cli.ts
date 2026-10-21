@@ -1,7 +1,9 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { CONFIG_FILE_NAMES, ConfigError } from "./config.js";
+import { toPosix } from "./discover.js";
 import { DoctorUsageError, diagnose, formatDoctorJson, formatDoctorText } from "./doctor.js";
 import { formatGithub, formatJson, formatText } from "./format.js";
 import { lint } from "./linter.js";
@@ -97,15 +99,17 @@ async function packageVersion(): Promise<string> {
   const urls = [new URL("../package.json", import.meta.url), new URL("../../package.json", import.meta.url)];
   const failures: string[] = [];
   for (const url of urls) {
+    const file = fileURLToPath(url);
     try {
-      const text = await readFile(url, "utf8");
+      const text = await readFile(file, "utf8");
       const parsed: unknown = JSON.parse(text);
       if (typeof parsed === "object" && parsed !== null && "version" in parsed && typeof parsed.version === "string") {
         return parsed.version;
       }
-      failures.push(`${url.pathname}: missing string "version"`);
+      failures.push(`${toPosix(file)}: missing string "version"`);
     } catch (err) {
-      failures.push(err instanceof Error ? err.message : String(err));
+      const message = err instanceof Error ? err.message : String(err);
+      failures.push(toPosix(message));
     }
   }
   throw new Error(`Could not read package version (${failures.join("; ")})`);
