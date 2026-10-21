@@ -15,7 +15,7 @@ The current release is 0.1.0.
 
 Report vulnerabilities through GitHub private vulnerability reporting:
 
-https://github.com/weugit/agentsmd-lint/security/advisories/new
+https://github.com/weugit/agentsmd-medic/security/advisories/new
 
 Do not open a public issue for a security report.
 
@@ -23,12 +23,12 @@ The maintainer aims to acknowledge a report within 3 business days and to follow
 
 ## Scope
 
-agentsmd-lint reads local files and writes a report to stdout or stderr. It does not upload file contents, repository contents, or diagnostics anywhere.
+agentsmd-medic reads local files and writes a report to stdout or stderr. It does not upload file contents, repository contents, or diagnostics anywhere.
 
 In scope:
 
 - Bugs in this repository that cause the tool, the GitHub Action, or the release workflow to mishandle local input (for example parser crashes, path handling that escapes the file the user asked to read, or credential material printed in full by the `no-secrets` rule).
-- The publish workflow and the `NPM_TOKEN` secret handling in `.github/workflows/release.yml`.
+- The publish workflow in `.github/workflows/release.yml`, which publishes to npm through trusted publishing (OIDC) without a stored token.
 
 Out of scope:
 

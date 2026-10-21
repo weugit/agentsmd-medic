@@ -68,7 +68,7 @@ export function formatText(result: LintResult, options: FormatTextOptions = {}):
       else warnings += 1;
     }
     if (diagnostics.length === 0) continue;
-    const heading = paint(file.relativePath, `${BOLD}${UNDERLINE}`, color);
+    const heading = paint(toPosix(file.relativePath), `${BOLD}${UNDERLINE}`, color);
     blocks.push(`${heading}\n${formatRows(diagnostics, color)}\n`);
   }
 
@@ -86,11 +86,11 @@ export function formatJson(result: LintResult): string {
   return JSON.stringify(
     {
       version: 1,
-      root: result.root,
+      root: toPosix(result.root),
       errorCount: result.errorCount,
       warningCount: result.warningCount,
       files: result.files.map((file) => ({
-        path: file.relativePath,
+        path: toPosix(file.relativePath),
         errorCount: file.errorCount,
         warningCount: file.warningCount,
         diagnostics: file.diagnostics.map((d) => ({
@@ -124,7 +124,7 @@ export function formatGithub(result: LintResult, cwd: string): string {
     const rel = escapeProperty(toPosix(path.relative(cwd, path.resolve(file.file))));
     for (const diagnostic of file.diagnostics) {
       const kind = diagnostic.severity === "error" ? "error" : "warning";
-      const title = escapeProperty(`agentsmd-lint (${diagnostic.ruleId})`);
+      const title = escapeProperty(`agentsmd-medic (${diagnostic.ruleId})`);
       const message = escapeData(diagnostic.message);
       lines.push(`::${kind} file=${rel},line=${diagnostic.line},col=${diagnostic.column},title=${title}::${message}`);
     }

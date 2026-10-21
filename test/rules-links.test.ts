@@ -88,6 +88,14 @@ describe("no-broken-links", () => {
     expect(links(root, "AGENTS.md", "# Setup\n\nSee [extra](docs/extra.md#extra-1).\n")).toEqual([]);
     const missing = links(root, "AGENTS.md", "# Setup\n\nSee [extra](docs/extra.md#extra-2).\n");
     expect(missing).toHaveLength(1);
+    expect(missing[0]?.message).toBe('Anchor "#extra-2" not found in docs/extra.md.');
+  });
+
+  it("resolves a root-relative link from the lint root", async () => {
+    const root = await repo();
+    expect(links(root, "pkg/AGENTS.md", "# Setup\n\nSee [guide](/guide.md).\n")).toEqual([]);
+    const missing = links(root, "pkg/AGENTS.md", "# Setup\n\nSee [x](/docs/missing.md).\n");
+    expect(missing[0]?.message).toBe('Broken link: "/docs/missing.md" (resolved to docs/missing.md) does not exist.');
   });
 
   it("decodes percent-encoded paths", async () => {

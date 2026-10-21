@@ -15,7 +15,7 @@ afterEach(async () => {
 
 /** Fresh directory under the OS temp dir. Removed after each test. */
 export async function tempDir(): Promise<string> {
-  const dir = await mkdtemp(path.join(tmpdir(), "agentsmd-lint-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "agentsmd-medic-"));
   temps.push(dir);
   return dir;
 }
@@ -38,8 +38,16 @@ export function withConfig(override: Partial<Config> = {}): Config {
   };
 }
 
+/** Drive-qualified on Windows so virtual paths stay absolute and on one drive. */
+const VIRTUAL_ROOT = process.platform === "win32" ? "C:\\virtual" : "/virtual";
+
 /** Lint a source string. `file` and `root` default to a virtual path. */
-export function lintSource(source: string, config?: Partial<Config>, file = "/virtual/AGENTS.md", root = "/virtual"): Diagnostic[] {
+export function lintSource(
+  source: string,
+  config?: Partial<Config>,
+  file = path.join(VIRTUAL_ROOT, "AGENTS.md"),
+  root = VIRTUAL_ROOT,
+): Diagnostic[] {
   return lintText(source, { file, root, config: withConfig(config) });
 }
 

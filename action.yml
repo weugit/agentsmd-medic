@@ -1,4 +1,4 @@
-name: agentsmd-lint
+name: agentsmd-medic
 description: Lint AGENTS.md and AGENTS.override.md instruction files
 branding:
   icon: check-square
@@ -10,7 +10,7 @@ inputs:
     required: false
     default: "."
   config:
-    description: Config file. Leave empty to use .agentsmd-lint.json or agentsmd-lint.config.json in the working directory when one of those files exists.
+    description: Config file. Leave empty to use .agentsmd-medic.json or agentsmd-medic.config.json in the working directory when one of those files exists.
     required: false
     default: ""
   max-warnings:
@@ -30,11 +30,11 @@ runs:
   using: composite
   steps:
     - name: Set up Node.js
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v7
       with:
         node-version: "22"
 
-    - name: Install and build agentsmd-lint
+    - name: Install and build agentsmd-medic
       if: ${{ inputs.version == '' }}
       shell: bash
       run: |
@@ -60,7 +60,7 @@ runs:
         fi
         args+=(--format "${INPUT_FORMAT}")
         if [[ -z "${INPUT_VERSION}" ]]; then
-          node "${GITHUB_ACTION_PATH}/bin/agentsmd-lint.js" "${args[@]}" -- "${INPUT_PATH}"
+          node "${GITHUB_ACTION_PATH}/bin/agentsmd-medic.js" "${args[@]}" -- "${INPUT_PATH}"
         else
-          npx --yes "agentsmd-lint@${INPUT_VERSION}" "${args[@]}" -- "${INPUT_PATH}"
+          npx --yes "agentsmd-medic@${INPUT_VERSION}" "${args[@]}" -- "${INPUT_PATH}"
         fi

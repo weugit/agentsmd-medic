@@ -1,6 +1,6 @@
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { findAgentFiles } from "../src/discover.js";
+import { escapesRoot, findAgentFiles, toPosix } from "../src/discover.js";
 import { tempDir, writeTree } from "./helpers.js";
 
 function rels(root: string, files: string[]): string[] {
@@ -90,5 +90,30 @@ describe("findAgentFiles", () => {
   it("returns an empty list when the root cannot be read", async () => {
     const root = await tempDir();
     expect(await findAgentFiles(path.join(root, "missing"))).toEqual([]);
+  });
+
+  it("ignores a Windows-style path prefix", async () => {
+    const root = await fixture();
+    const found = rels(root, await findAgentFiles(root, ["docs\\internal"]));
+    expect(found).not.toContain("docs/internal/AGENTS.md");
+    expect(found).toContain("docs/AGENTS.md");
+  });
+});
+
+describe("toPosix", () => {
+  it("normalizes a Windows-style relative path", () => {
+    const shown = toPosix(path.win32.relative(path.win32.join("repo"), path.win32.join("repo", "docs", "missing.md")), path.win32.sep);
+    expect(shown).toBe("docs/missing.md");
+    expect(toPosix("docs\\sub\\missing.md", "\\")).toBe("docs/sub/missing.md");
+    expect(toPosix("C:\\repo\\pkg\\AGENTS.md", path.win32.sep)).toBe("C:/repo/pkg/AGENTS.md");
+    expect(toPosix("docs/already.md", "\\")).toBe("docs/already.md");
+  });
+
+  it("treats parent and other-drive relatives as outside", () => {
+    expect(escapesRoot("..\\pkg\\AGENTS.md")).toBe(true);
+    expect(escapesRoot("../pkg/AGENTS.md")).toBe(true);
+    expect(escapesRoot("..")).toBe(true);
+    expect(escapesRoot("..foo")).toBe(false);
+    expect(escapesRoot("pkg\\AGENTS.md")).toBe(false);
   });
 });

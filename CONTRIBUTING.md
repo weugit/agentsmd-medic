@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for helping with agentsmd-lint. This project lints `AGENTS.md` instruction files. It is a TypeScript ESM package with no runtime dependencies.
+Thanks for helping with agentsmd-medic. This project lints `AGENTS.md` instruction files. It is a TypeScript ESM package with no runtime dependencies.
 
 By participating you agree to the [Code of Conduct](CODE_OF_CONDUCT.md).
 
@@ -9,8 +9,8 @@ By participating you agree to the [Code of Conduct](CODE_OF_CONDUCT.md).
 Install Node.js 20 or newer, then:
 
 ```bash
-git clone https://github.com/weugit/agentsmd-lint.git
-cd agentsmd-lint
+git clone https://github.com/weugit/agentsmd-medic.git
+cd agentsmd-medic
 npm ci
 npm run build
 ```
@@ -27,10 +27,10 @@ npm run build
 | `npm test` | Vitest once (`vitest.config.ts`, `test/**/*.test.ts`) |
 | `npm run test:watch` | Vitest in watch mode |
 | `npm run check` | lint, typecheck, and test |
-| `npm run selfcheck` | build, then `node bin/agentsmd-lint.js .` |
+| `npm run selfcheck` | build, then `node bin/agentsmd-medic.js .` |
 | `npm run prepublishOnly` | `npm run check` and `npm run build` |
 
-The bin entry `bin/agentsmd-lint.js` imports `dist/cli.js`. Run `npm run build` before `node bin/agentsmd-lint.js`.
+The bin entry `bin/agentsmd-medic.js` imports `dist/cli.js`. Run `npm run build` before `node bin/agentsmd-medic.js`.
 
 ## Add a rule
 
@@ -86,4 +86,4 @@ User-facing changes go under `## [Unreleased]` in `CHANGELOG.md` as the change i
 
 ## Security
 
-Report vulnerabilities through [private advisories](https://github.com/weugit/agentsmd-lint/security/advisories/new). See [SECURITY.md](SECURITY.md). Do not file a public issue for a security bug.
+Report vulnerabilities through [private advisories](https://github.com/weugit/agentsmd-medic/security/advisories/new). See [SECURITY.md](SECURITY.md). Do not file a public issue for a security bug.

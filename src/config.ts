@@ -1,8 +1,9 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { toPosix } from "./discover.js";
 import type { Config, RuleSetting } from "./types.js";
 
-export const CONFIG_FILE_NAMES = [".agentsmd-lint.json", "agentsmd-lint.config.json"];
+export const CONFIG_FILE_NAMES = [".agentsmd-medic.json", "agentsmd-medic.config.json"];
 
 export const DEFAULT_CONFIG: Config = {
   rules: {},
@@ -46,20 +47,21 @@ export function validateConfig(raw: unknown, source: string): Partial<Config> {
 export async function loadConfig(root: string, explicitPath?: string): Promise<{ config: Config; path?: string }> {
   const candidates = explicitPath ? [path.resolve(explicitPath)] : CONFIG_FILE_NAMES.map((n) => path.join(root, n));
   for (const candidate of candidates) {
+    const shown = toPosix(candidate);
     let text: string;
     try {
       text = await readFile(candidate, "utf8");
     } catch (err) {
-      if (explicitPath) throw new ConfigError(`Cannot read config file ${candidate}: ${(err as Error).message}`);
+      if (explicitPath) throw new ConfigError(`Cannot read config file ${shown}: ${toPosix((err as Error).message)}`);
       continue;
     }
     let parsed: unknown;
     try {
       parsed = JSON.parse(text);
     } catch (err) {
-      throw new ConfigError(`${candidate}: invalid JSON (${(err as Error).message})`);
+      throw new ConfigError(`${shown}: invalid JSON (${(err as Error).message})`);
     }
-    return { config: mergeConfig(DEFAULT_CONFIG, validateConfig(parsed, candidate)), path: candidate };
+    return { config: mergeConfig(DEFAULT_CONFIG, validateConfig(parsed, shown)), path: candidate };
   }
   return { config: { ...DEFAULT_CONFIG, rules: {} } };
 }

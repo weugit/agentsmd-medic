@@ -1,6 +1,6 @@
 {
-  "name": "agentsmd-lint",
-  "version": "0.1.0",
+  "name": "agentsmd-medic",
+  "version": "0.1.1",
   "description": "Lint and validate AGENTS.md files — the instructions AI coding agents (Codex, Cursor, Copilot, Jules, ...) read from your repo.",
   "keywords": [
     "agents.md",
@@ -16,15 +16,15 @@
   "author": "weugit",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/weugit/agentsmd-lint.git"
+    "url": "git+https://github.com/weugit/agentsmd-medic.git"
   },
   "bugs": {
-    "url": "https://github.com/weugit/agentsmd-lint/issues"
+    "url": "https://github.com/weugit/agentsmd-medic/issues"
   },
-  "homepage": "https://github.com/weugit/agentsmd-lint#readme",
+  "homepage": "https://github.com/weugit/agentsmd-medic#readme",
   "type": "module",
   "bin": {
-    "agentsmd-lint": "bin/agentsmd-lint.js"
+    "agentsmd-medic": "bin/agentsmd-medic.js"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -55,13 +55,13 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "check": "npm run lint && npm run typecheck && npm test",
-    "selfcheck": "npm run build && node bin/agentsmd-lint.js .",
+    "selfcheck": "npm run build && node bin/agentsmd-medic.js .",
     "prepublishOnly": "npm run check && npm run build"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
     "@types/node": "^26.6.5",
-    "eslint": "^9.39.5",
+    "eslint": "^10.13.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.72.0",
     "vitest": "^4.1.12"

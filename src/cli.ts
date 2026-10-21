@@ -1,7 +1,10 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { CONFIG_FILE_NAMES, ConfigError } from "./config.js";
+import { toPosix } from "./discover.js";
+import { DoctorUsageError, diagnose, formatDoctorJson, formatDoctorText } from "./doctor.js";
 import { formatGithub, formatJson, formatText } from "./format.js";
 import { lint } from "./linter.js";
 import { rules } from "./rules/index.js";
@@ -23,14 +26,24 @@ function isFormat(value: string): value is FormatName {
 
 function helpText(): string {
   const configNames = CONFIG_FILE_NAMES.map((name) => `  ${name}`).join("\n");
-  return `agentsmd-lint — lint AGENTS.md instruction files
+  return `agentsmd-medic — lint AGENTS.md instruction files
 
 Usage:
-  agentsmd-lint [options] [path...]
+  agentsmd-medic [options] [path...]
+  agentsmd-medic doctor [options] [dir]
 
 Lint AGENTS.md and AGENTS.override.md files. A path that is a file is linted
 directly. A path that is a directory is searched recursively. The default path
 is ".".
+
+doctor reports which instruction files each agent loads for [dir] (default:
+the working directory), from that directory up to the git root. The git root
+is the nearest ancestor that contains .git, or [dir] when there is none.
+Agents: OpenAI Codex, Claude Code, Cursor, GitHub Copilot, and Gemini CLI.
+Text output is grouped per agent and uses ✔ and ⚠ markers. --json (or
+--format json) prints a versioned document. --format github is rejected.
+doctor exits 0 unless the invocation is invalid. The first positional
+argument "doctor" is the subcommand. A path such as ./doctor is still linted.
 
 Options:
   -c, --config <file>     Config file. When omitted, the working directory is
@@ -60,22 +73,25 @@ ${configNames}
   "rules"          Map of rule id to "error", "warn", or "off"
   "ignore"         Directory names or path prefixes to skip while searching
   "maxBytes"       Soft size limit in bytes (default 32768)
-  "maxTokens"      Soft token budget, estimated as chars / 4 (default 8000)
+  "maxTokens"      Soft token budget (default 8000). CJK and fullwidth
+                   characters count as one token; other text is chars / 4
 
 Inline comments in an AGENTS.md file:
-  <!-- agentsmd-lint-disable -->
-  <!-- agentsmd-lint-disable rule-a, rule-b -->
+  <!-- agentsmd-medic-disable -->
+  <!-- agentsmd-medic-disable rule-a, rule-b -->
       Disable every rule, or the named rules, for the whole file.
-  <!-- agentsmd-lint-disable-next-line -->
-  <!-- agentsmd-lint-disable-next-line rule-a, rule-b -->
+  <!-- agentsmd-medic-disable-next-line -->
+  <!-- agentsmd-medic-disable-next-line rule-a, rule-b -->
       Disable every rule, or the named rules, for the next non-blank line.
   Comments inside fenced code blocks are not treated as directives.
 
 Exit codes:
-  0  No errors, and warnings do not exceed --max-warnings
+  0  No errors, and warnings do not exceed --max-warnings.
+     doctor exits 0 when the directory can be read, including when the
+     report contains warnings
   1  One or more errors, or more warnings than --max-warnings
   2  Usage error, invalid config, or a path that does not exist
-     The message is written to stderr and prefixed with "agentsmd-lint: ".
+     The message is written to stderr and prefixed with "agentsmd-medic: ".
 `;
 }
 
@@ -83,15 +99,17 @@ async function packageVersion(): Promise<string> {
   const urls = [new URL("../package.json", import.meta.url), new URL("../../package.json", import.meta.url)];
   const failures: string[] = [];
   for (const url of urls) {
+    const file = fileURLToPath(url);
     try {
-      const text = await readFile(url, "utf8");
+      const text = await readFile(file, "utf8");
       const parsed: unknown = JSON.parse(text);
       if (typeof parsed === "object" && parsed !== null && "version" in parsed && typeof parsed.version === "string") {
         return parsed.version;
       }
-      failures.push(`${url.pathname}: missing string "version"`);
+      failures.push(`${toPosix(file)}: missing string "version"`);
     } catch (err) {
-      failures.push(err instanceof Error ? err.message : String(err));
+      const message = err instanceof Error ? err.message : String(err);
+      failures.push(toPosix(message));
     }
   }
   throw new Error(`Could not read package version (${failures.join("; ")})`);
@@ -110,12 +128,19 @@ function writeLine(write: (s: string) => unknown, text: string): void {
 }
 
 function fail(io: Io, message: string): number {
-  writeLine((s) => io.stderr.write(s), `agentsmd-lint: ${message}`);
+  writeLine((s) => io.stderr.write(s), `agentsmd-medic: ${message}`);
   return 2;
 }
 
 function isUsageError(err: unknown): err is Error {
-  return err instanceof ConfigError || (err instanceof Error && err.message.startsWith("Path not found:"));
+  return err instanceof ConfigError || err instanceof DoctorUsageError || (err instanceof Error && err.message.startsWith("Path not found:"));
+}
+
+/** Color is on for a TTY when NO_COLOR is unset, unless a flag overrides it. */
+function useColor(io: Io, colorFlag: boolean | undefined): boolean {
+  const env = io.env ?? {};
+  if (colorFlag !== undefined) return colorFlag;
+  return Boolean(io.stdout.isTTY) && !env.NO_COLOR;
 }
 
 /**
@@ -186,6 +211,22 @@ export async function main(
     return fail(io, `Invalid value for --format: "${format}". Expected text, json, or github.`);
   }
 
+  const doctor = parsed.positionals[0] === "doctor";
+  if (doctor) {
+    if (parsed.positionals.length > 2) return fail(io, "doctor accepts at most one directory.");
+    if (format === "github") return fail(io, "doctor does not support --format github. Use text or json.");
+    const dirArg = parsed.positionals[1] ?? ".";
+    try {
+      const report = await diagnose(path.resolve(io.cwd, dirArg), dirArg);
+      const output = format === "json" ? formatDoctorJson(report) : formatDoctorText(report, { color: useColor(io, colorFlag) });
+      writeLine((s) => io.stdout.write(s), output);
+      return 0;
+    } catch (err) {
+      if (isUsageError(err)) return fail(io, err.message);
+      throw err;
+    }
+  }
+
   let maxWarnings = Number.POSITIVE_INFINITY;
   const rawMax = parsed.values["max-warnings"];
   if (rawMax !== undefined) {
@@ -195,9 +236,7 @@ export async function main(
     maxWarnings = Number(rawMax);
   }
 
-  const env = io.env ?? {};
-  let color = Boolean(io.stdout.isTTY) && !env.NO_COLOR;
-  if (colorFlag !== undefined) color = colorFlag;
+  const color = useColor(io, colorFlag);
 
   let result: LintResult & { configPath?: string };
   try {

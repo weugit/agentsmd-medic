@@ -1,8 +1,11 @@
+export { AGENTS, CODEX_PROJECT_DOC_MAX_BYTES } from "./agents.js";
 export { main } from "./cli.js";
 export { CONFIG_FILE_NAMES, ConfigError, DEFAULT_CONFIG, loadConfig } from "./config.js";
 export { AGENT_FILE_NAMES, findAgentFiles } from "./discover.js";
+export { DoctorUsageError, diagnose, formatDoctorJson, formatDoctorText } from "./doctor.js";
 export { formatGithub, formatJson, formatText } from "./format.js";
 export { lint, lintFiles, lintText } from "./linter.js";
 export { parseMarkdown, slugify } from "./markdown.js";
 export { ruleMap, rules } from "./rules/index.js";
+export type { DoctorAgent, DoctorFile, DoctorReport } from "./doctor.js";
 export type * from "./types.js";

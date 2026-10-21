@@ -10,7 +10,7 @@ Do not invent usage numbers, download counts, or adopter quotes in the issues or
 
 **Acceptance criteria.**
 
-- Add `schema/agentsmd-lint.schema.json` (JSON Schema draft 2020-12) describing those four fields. `additionalProperties` may be true so `$schema` stays valid, or false if you also document that `$schema` is the one extra key you allow.
+- Add `schema/agentsmd-medic.schema.json` (JSON Schema draft 2020-12) describing those four fields. `additionalProperties` may be true so `$schema` stays valid, or false if you also document that `$schema` is the one extra key you allow.
 - `rules` values are only `error`, `warn`, and `off`. `ignore` items are strings. `maxBytes` and `maxTokens` are numbers greater than 0.
 - README Configuration shows a `$schema` URL a user can paste (the raw GitHub URL for that file on `main` is enough).
 - Do not add a runtime dependency. A test can `JSON.parse` the schema and assert the field names match `Config` in `src/types.ts`.
@@ -19,11 +19,11 @@ Do not invent usage numbers, download counts, or adopter quotes in the issues or
 
 ## 2. Support a same-line disable comment
 
-**Context.** `src/linter.ts` understands `<!-- agentsmd-lint-disable -->` for the whole file and `<!-- agentsmd-lint-disable-next-line -->` for the next non-blank line. An optional comma-separated list limits which rules go quiet. Comments inside fenced code are ignored. There is no way to silence a finding on the same line as the comment.
+**Context.** `src/linter.ts` understands `<!-- agentsmd-medic-disable -->` for the whole file and `<!-- agentsmd-medic-disable-next-line -->` for the next non-blank line. An optional comma-separated list limits which rules go quiet. Comments inside fenced code are ignored. There is no way to silence a finding on the same line as the comment.
 
 **Acceptance criteria.**
 
-- `<!-- agentsmd-lint-disable-line -->` and `<!-- agentsmd-lint-disable-line rule-a, rule-b -->` suppress every rule, or the named rules, on the line that contains the comment.
+- `<!-- agentsmd-medic-disable-line -->` and `<!-- agentsmd-medic-disable-line rule-a, rule-b -->` suppress every rule, or the named rules, on the line that contains the comment.
 - Next-line and whole-file behavior stays as it is. A fenced sample of the new comment does not suppress real findings.
 - Help text in `src/cli.ts` and the inline-comment section of `README.md` document the form.
 - Tests cover a same-line hit, a named-rule list, and a fenced comment that must not suppress.
@@ -52,7 +52,7 @@ Do not invent usage numbers, download counts, or adopter quotes in the issues or
 
 - `--ignore <pattern>` may be repeated. Each value is appended to `config.ignore` after the config file is loaded. Existing config entries stay.
 - Help text in `src/cli.ts` documents the flag. README Usage lists it.
-- A bad invocation still exits 2 with the `agentsmd-lint: ` prefix on stderr.
+- A bad invocation still exits 2 with the `agentsmd-medic: ` prefix on stderr.
 - Tests show that a directory matched by `--ignore` is not linted, and that a config `ignore` entry still applies when the flag is also set.
 
 **File pointers.** `src/cli.ts`, `src/linter.ts` (`LintOptions` / `lint`), `src/discover.ts`, `src/config.ts`, `README.md`, `test/`.
