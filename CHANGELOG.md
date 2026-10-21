@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `agentsmd-lint doctor [dir]` reports which instruction files OpenAI Codex, Claude Code, Cursor, GitHub Copilot, and Gemini CLI load from that directory up to the git root. Text output groups each agent with ✔ and ⚠ markers. `--json` prints a versioned document. The command exits 0 unless the invocation is invalid (exit 2).
+- `max-size` estimates tokens with CJK and fullwidth characters counted as one token each and other text as characters / 4. The byte check stays UTF-8 bytes. When CJK content is more than 20% of non-whitespace characters and the file exceeds `maxBytes`, the message notes that CJK text uses 3 bytes per character in UTF-8 and reaches the 32 KiB cap with ~11k characters.
+
 ## [0.1.0] - 2026-10-21
 
 ### Added

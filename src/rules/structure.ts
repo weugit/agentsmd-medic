@@ -1,5 +1,48 @@
 import type { Rule } from "../types.js";
 
+/**
+ * Han, Hiragana, Katakana, and Hangul, plus the Halfwidth and Fullwidth Forms
+ * block. These count as about one token. The rest of the text is chars / 4.
+ */
+const CJK_SCRIPT = /\p{Script=Han}|\p{Script=Hiragana}|\p{Script=Katakana}|\p{Script=Hangul}/u;
+
+export interface SizeEstimate {
+  bytes: number;
+  tokens: number;
+  /** Characters counted as one token each. */
+  cjkChars: number;
+  nonWhitespaceChars: number;
+  /** True when CJK and fullwidth characters are more than 20% of non-whitespace characters. */
+  substantialCjk: boolean;
+}
+
+function isCjkOrFullwidth(char: string): boolean {
+  const codePoint = char.codePointAt(0);
+  if (codePoint === undefined) return false;
+  if (codePoint >= 0xff00 && codePoint <= 0xffef) return true;
+  return CJK_SCRIPT.test(char);
+}
+
+/** Token estimate: CJK and fullwidth characters are one token; other text is chars / 4. */
+export function analyzeSize(source: string): SizeEstimate {
+  const bytes = Buffer.byteLength(source, "utf8");
+  let cjkChars = 0;
+  let otherChars = 0;
+  let nonWhitespaceChars = 0;
+  for (const char of source) {
+    if (!/\s/u.test(char)) nonWhitespaceChars += 1;
+    if (isCjkOrFullwidth(char)) cjkChars += 1;
+    else otherChars += 1;
+  }
+  return {
+    bytes,
+    tokens: cjkChars + Math.ceil(otherChars / 4),
+    cjkChars,
+    nonWhitespaceChars,
+    substantialCjk: nonWhitespaceChars > 0 && cjkChars / nonWhitespaceChars > 0.2,
+  };
+}
+
 export const noEmptyFile: Rule = {
   id: "no-empty-file",
   description: "The file must contain some instructions.",
@@ -22,22 +65,22 @@ export const requireHeading: Rule = {
 
 export const maxSize: Rule = {
   id: "max-size",
-  description: "Keep the file within the size agents actually read.",
+  description: "Keep the file within the size agents actually read, using a CJK-aware token estimate.",
   defaultSeverity: "warn",
   check({ doc, config }) {
     const out: { message: string; line: number; column: number }[] = [];
-    const bytes = Buffer.byteLength(doc.source, "utf8");
-    if (bytes > config.maxBytes) {
-      out.push({
-        message: `File is ${bytes} bytes, over the ${config.maxBytes}-byte limit; some agents (e.g. Codex, 32 KiB by default) truncate project docs beyond this.`,
-        line: 1,
-        column: 1,
-      });
+    const estimate = analyzeSize(doc.source);
+    if (estimate.bytes > config.maxBytes) {
+      let message = `File is ${estimate.bytes} bytes, over the ${config.maxBytes}-byte limit; some agents (e.g. Codex, 32 KiB by default) truncate project docs beyond this.`;
+      if (estimate.substantialCjk) {
+        message += " CJK text uses 3 bytes per character in UTF-8, so it reaches the 32 KiB cap with ~11k characters.";
+      }
+      out.push({ message, line: 1, column: 1 });
     }
-    const tokens = Math.ceil(doc.source.length / 4);
-    if (tokens > config.maxTokens) {
+    if (estimate.tokens > config.maxTokens) {
+      const how = estimate.cjkChars > 0 ? "CJK and fullwidth as 1 token, other text as chars/4" : "chars/4";
       out.push({
-        message: `File is roughly ${tokens} tokens (chars/4), over the ${config.maxTokens}-token budget; large instruction files crowd out the agent's context.`,
+        message: `File is roughly ${estimate.tokens} tokens (${how}), over the ${config.maxTokens}-token budget; large instruction files crowd out the agent's context.`,
         line: 1,
         column: 1,
       });

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { analyzeSize } from "../src/rules/structure.js";
 import { forRule, lintSource } from "./helpers.js";
 
 const doc = `# Setup
@@ -73,6 +74,45 @@ describe("max-size", () => {
 
   it("accepts a file within both limits", () => {
     expect(forRule(lintSource(doc), "max-size")).toEqual([]);
+  });
+
+  it("counts CJK and fullwidth characters as one token and other text as chars/4", () => {
+    expect(analyzeSize("abcd").tokens).toBe(1);
+    expect(analyzeSize("abcde").tokens).toBe(2);
+    expect(analyzeSize("你").tokens).toBe(1);
+    expect(analyzeSize("あ").tokens).toBe(1);
+    expect(analyzeSize("ア").tokens).toBe(1);
+    expect(analyzeSize("한").tokens).toBe(1);
+    expect(analyzeSize("Ａ").tokens).toBe(1);
+    expect(analyzeSize("あア한你Ａ").tokens).toBe(5);
+    expect(analyzeSize("abcdあ").tokens).toBe(2);
+    expect(analyzeSize("あ   ").tokens).toBe(2);
+    expect(analyzeSize("").tokens).toBe(0);
+
+    const source = "abcd你好";
+    const findings = forRule(lintSource(source, { maxBytes: 10_000, maxTokens: 2 }), "max-size");
+    expect(findings.map((finding) => finding.message)).toEqual([
+      "File is roughly 3 tokens (CJK and fullwidth as 1 token, other text as chars/4), over the 2-token budget; large instruction files crowd out the agent's context.",
+    ]);
+  });
+
+  it("mentions UTF-8 byte width when substantial CJK content exceeds maxBytes", () => {
+    const over = "你abc";
+    expect(analyzeSize(over).substantialCjk).toBe(true);
+    const findings = forRule(lintSource(over, { maxBytes: 1, maxTokens: 100 }), "max-size");
+    expect(findings).toHaveLength(1);
+    expect(findings[0]?.message).toContain("File is 6 bytes, over the 1-byte limit");
+    expect(findings[0]?.message).toContain("CJK text uses 3 bytes per character in UTF-8, so it reaches the 32 KiB cap with ~11k characters.");
+  });
+
+  it("does not mention the CJK byte note at or below 20% of non-whitespace characters", () => {
+    const exact = "你abcd";
+    expect(analyzeSize(exact).substantialCjk).toBe(false);
+    expect(analyzeSize(exact).cjkChars / analyzeSize(exact).nonWhitespaceChars).toBe(0.2);
+    const findings = forRule(lintSource(exact, { maxBytes: 1, maxTokens: 100 }), "max-size");
+    expect(findings).toHaveLength(1);
+    expect(findings[0]?.message).not.toContain("3 bytes per character");
+    expect(findings[0]?.message).toContain("bytes, over the 1-byte limit");
   });
 });
 

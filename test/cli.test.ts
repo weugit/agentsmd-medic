@@ -152,6 +152,7 @@ describe("main", () => {
     expect(await main(["-h"], cap.io)).toBe(0);
     const { stdout, stderr } = cap.text();
     expect(stdout).toContain("Usage:");
+    expect(stdout).toContain("doctor");
     expect(stdout).toContain("--max-warnings");
     expect(stdout).toContain(".agentsmd-lint.json");
     expect(stdout).toContain("agentsmd-lint.config.json");
@@ -211,5 +212,69 @@ describe("main", () => {
     const cap = capture(cwd);
     expect(await main(["missing.md"], cap.io)).toBe(2);
     expect(cap.text().stderr).toBe("agentsmd-lint: Path not found: missing.md\n");
+  });
+
+  it("reports doctor findings and exits 0", async () => {
+    const cwd = await tempDir();
+    await writeTree(cwd, { "AGENTS.md": clean, ".git/HEAD": "ref: refs/heads/main\n" });
+    const cap = capture(cwd);
+    expect(await main(["doctor"], cap.io)).toBe(0);
+    const { stdout, stderr } = cap.text();
+    expect(stdout).toContain("OpenAI Codex");
+    expect(stdout).toContain("AGENTS.md is ignored by Claude Code: no CLAUDE.md imports it");
+    expect(stdout).toContain("✔");
+    expect(stdout).toContain("⚠");
+    expect(stdout.includes("\u001b")).toBe(false);
+    expect(stderr).toBe("");
+
+    const json = capture(cwd);
+    expect(await main(["doctor", "--json", "."], json.io)).toBe(0);
+    const parsed = JSON.parse(json.text().stdout) as { version: number; command: string; directory: string; agents: { id: string }[] };
+    expect(parsed.version).toBe(1);
+    expect(parsed.command).toBe("doctor");
+    expect(parsed.directory).toBe(cwd);
+    expect(parsed.agents.map((item) => item.id)).toEqual(["codex", "claude", "cursor", "copilot", "gemini"]);
+  });
+
+  it("colors doctor text and honors --no-color", async () => {
+    const cwd = await tempDir();
+    await writeTree(cwd, { "AGENTS.md": clean });
+    const colored = capture(cwd, { tty: true });
+    expect(await main(["doctor", "--color"], colored.io)).toBe(0);
+    expect(colored.text().stdout).toContain("\u001b[32m✔");
+    expect(colored.text().stdout).toContain("\u001b[33m⚠");
+
+    const plain = capture(cwd, { tty: true });
+    expect(await main(["doctor", "--color", "--no-color"], plain.io)).toBe(0);
+    expect(plain.text().stdout.includes("\u001b")).toBe(false);
+
+    const noColorEnv = capture(cwd, { tty: true, env: { NO_COLOR: "1" } });
+    expect(await main(["doctor"], noColorEnv.io)).toBe(0);
+    expect(noColorEnv.text().stdout.includes("\u001b")).toBe(false);
+  });
+
+  it("exits 2 for a bad doctor invocation and still lints a path named ./doctor", async () => {
+    const cwd = await tempDir();
+    await writeTree(cwd, { "AGENTS.md": clean, doctor: clean });
+    const missing = capture(cwd);
+    expect(await main(["doctor", "missing"], missing.io)).toBe(2);
+    expect(missing.text().stderr).toBe("agentsmd-lint: Path not found: missing\n");
+
+    const file = capture(cwd);
+    expect(await main(["doctor", "AGENTS.md"], file.io)).toBe(2);
+    expect(file.text().stderr).toContain("doctor expects a directory");
+
+    const extra = capture(cwd);
+    expect(await main(["doctor", "a", "b"], extra.io)).toBe(2);
+    expect(extra.text().stderr).toContain("doctor accepts at most one directory");
+
+    const github = capture(cwd);
+    expect(await main(["doctor", "--format", "github"], github.io)).toBe(2);
+    expect(github.text().stderr).toContain("doctor does not support --format github");
+
+    const lintNamed = capture(cwd);
+    expect(await main(["./doctor"], lintNamed.io)).toBe(0);
+    expect(lintNamed.text().stdout).toContain("no problems found");
+    expect(lintNamed.text().stdout).not.toContain("Repo root");
   });
 });

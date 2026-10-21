@@ -4,7 +4,23 @@ import path from "node:path";
 /** File names agents read. AGENTS.override.md is honoured by OpenAI Codex. */
 export const AGENT_FILE_NAMES = ["AGENTS.md", "AGENTS.override.md"];
 
-const ALWAYS_SKIP = new Set([".git", "node_modules", ".hg", ".svn", "dist", "build", "coverage", ".next", ".turbo", "vendor", ".venv", "venv", "__pycache__", "target"]);
+/** Directory names discovery and doctor never search. */
+export const SKIP_DIRECTORY_NAMES: ReadonlySet<string> = new Set([
+  ".git",
+  "node_modules",
+  ".hg",
+  ".svn",
+  "dist",
+  "build",
+  "coverage",
+  ".next",
+  ".turbo",
+  "vendor",
+  ".venv",
+  "venv",
+  "__pycache__",
+  "target",
+]);
 
 export function toPosix(p: string): string {
   return p.split(path.sep).join("/");
@@ -34,7 +50,7 @@ export async function findAgentFiles(root: string, ignore: string[] = []): Promi
       const abs = path.join(dir, entry.name);
       const rel = path.relative(root, abs);
       if (entry.isDirectory()) {
-        if (ALWAYS_SKIP.has(entry.name) || isIgnored(rel, ignore)) continue;
+        if (SKIP_DIRECTORY_NAMES.has(entry.name) || isIgnored(rel, ignore)) continue;
         await walk(abs);
       } else if (entry.isFile() && AGENT_FILE_NAMES.includes(entry.name) && !isIgnored(rel, ignore)) {
         found.push(abs);

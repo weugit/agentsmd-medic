@@ -49,7 +49,7 @@ export interface Config {
   ignore: string[];
   /** Soft size limit in bytes. Codex reads at most 32 KiB of project docs by default. */
   maxBytes: number;
-  /** Soft limit for the rough token estimate (chars / 4). */
+  /** Soft limit for the rough token estimate (CJK and fullwidth ≈ 1 token, other text ≈ chars / 4). */
   maxTokens: number;
 }
 

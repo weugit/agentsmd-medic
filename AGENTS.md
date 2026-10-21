@@ -6,7 +6,9 @@ agentsmd-lint checks AGENTS.md and AGENTS.override.md files. Those files are the
 
 The package is a TypeScript ESM command-line tool with no runtime dependencies. It discovers instruction files, parses a small subset of Markdown, and runs the rules registered in `src/rules/index.ts`. Node.js 20 or newer is required. The `engines` field in `package.json` says so.
 
-OpenAI Codex, Cursor, GitHub Copilot, Jules, and Aider read AGENTS.md. Codex merges files from the repository root down to the working directory. A closer file takes precedence. AGENTS.override.md overrides. Codex caps project docs at 32 KiB by default (`project_doc_max_bytes`). The `max-size` rule uses that same default byte limit.
+OpenAI Codex, Cursor, GitHub Copilot, Jules, and Aider read AGENTS.md. Codex reads one file per directory from the git root down to the working directory: AGENTS.override.md if that directory has one, otherwise AGENTS.md. It concatenates those files from the root toward the leaf. Codex caps project docs at 32 KiB by default (`project_doc_max_bytes`). The `max-size` rule uses that byte limit. Its token estimate counts each Han, Hiragana, Katakana, Hangul, and fullwidth character as one token and counts other text as characters divided by 4.
+
+`agentsmd-lint doctor` reports which instruction files Codex, Claude Code, Cursor, GitHub Copilot, and Gemini CLI would load for a directory. The walk stops at the git root, the nearest ancestor that contains .git. Documented behavior for those agents lives in `src/agents.ts`. The scan lives in `src/doctor.ts`.
 
 Human-facing docs live in [README.md](README.md). Contribution steps live in [CONTRIBUTING.md](CONTRIBUTING.md).
 
@@ -43,6 +45,14 @@ node bin/agentsmd-lint.js --no-color .
 
 A clean run exits 0. `node bin/agentsmd-lint.js --help` prints flags and exit codes. `node bin/agentsmd-lint.js --list-rules` prints each rule id, its default severity, and its description.
 
+Report which instruction files agents would load here:
+
+```bash
+node bin/agentsmd-lint.js doctor .
+```
+
+`doctor` exits 0 when the directory can be read. Warnings in that report do not change the exit code.
+
 ## Layout
 
 - `bin/agentsmd-lint.js` is the bin entry. It calls `main` from `dist/cli.js`.
@@ -50,6 +60,8 @@ A clean run exits 0. `node bin/agentsmd-lint.js --help` prints flags and exit co
 - `src/index.ts` is the programmatic API.
 - `src/config.ts` loads a JSON config from the working directory. The file names, in order, are .agentsmd-lint.json and agentsmd-lint.config.json.
 - `src/discover.ts` walks the tree for AGENTS.md and AGENTS.override.md.
+- `src/agents.ts` records documented instruction-file behavior and links to each agent's docs.
+- `src/doctor.ts` reports which of those files each agent loads from a directory up to the git root.
 - `src/linter.ts` runs rules and honors inline disable comments.
 - `src/markdown.ts` scans headings, links, and code spans.
 - `src/format.ts` renders text, JSON, and GitHub Actions workflow commands.
