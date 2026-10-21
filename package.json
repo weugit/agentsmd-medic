@@ -1,6 +1,6 @@
 {
   "name": "agentsmd-medic",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Lint and validate AGENTS.md files — the instructions AI coding agents (Codex, Cursor, Copilot, Jules, ...) read from your repo.",
   "keywords": [
     "agents.md",
@@ -61,7 +61,7 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/node": "^22.20.5",
-    "eslint": "^9.39.5",
+    "eslint": "^10.13.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.72.0",
     "vitest": "^4.1.12"
