@@ -81,15 +81,15 @@ function nextNonBlankLine(lines: string[], index: number): number | undefined {
 }
 
 /**
- * `<!-- agentsmd-doctor-disable [rules] -->` covers the whole file.
- * `<!-- agentsmd-doctor-disable-next-line [rules] -->` covers the next non-blank line.
+ * `<!-- agentsmd-medic-disable [rules] -->` covers the whole file.
+ * `<!-- agentsmd-medic-disable-next-line [rules] -->` covers the next non-blank line.
  * Comments inside fenced code are ignored so examples do not silence real findings.
  */
 function parseDisables(doc: ParsedDoc): Disables {
   const fileRules = new Set<string>();
   let fileAll = false;
   const lineRules = new Map<number, Set<string> | "all">();
-  const directive = /<!--\s*(agentsmd-doctor-disable(?:-next-line)?)(?=\s|-->)\s*([^>]*?)-->/g;
+  const directive = /<!--\s*(agentsmd-medic-disable(?:-next-line)?)(?=\s|-->)\s*([^>]*?)-->/g;
 
   doc.lines.forEach((line, index) => {
     const lineNo = index + 1;

@@ -82,7 +82,7 @@ describe("main", () => {
     const cwd = await tempDir();
     const cap = capture(cwd);
     expect(await main(["--max-warnings", "1.5"], cap.io)).toBe(2);
-    expect(cap.text().stderr).toMatch(/^agentsmd-doctor: --max-warnings must be an integer/);
+    expect(cap.text().stderr).toMatch(/^agentsmd-medic: --max-warnings must be an integer/);
   });
 
   it("prints JSON that parses", async () => {
@@ -122,7 +122,7 @@ describe("main", () => {
     await writeTree(cwd, { "pkg/AGENTS.md": "" });
     const cap = capture(cwd);
     expect(await main(["--format", "github"], cap.io)).toBe(1);
-    expect(cap.text().stdout).toContain("::error file=pkg/AGENTS.md,line=1,col=1,title=agentsmd-doctor (no-empty-file)::");
+    expect(cap.text().stdout).toContain("::error file=pkg/AGENTS.md,line=1,col=1,title=agentsmd-medic (no-empty-file)::");
     expect(cap.text().stderr).toBe("");
   });
 
@@ -155,8 +155,8 @@ describe("main", () => {
     expect(stdout).toContain("Usage:");
     expect(stdout).toContain("doctor");
     expect(stdout).toContain("--max-warnings");
-    expect(stdout).toContain(".agentsmd-doctor.json");
-    expect(stdout).toContain("agentsmd-doctor.config.json");
+    expect(stdout).toContain(".agentsmd-medic.json");
+    expect(stdout).toContain("agentsmd-medic.config.json");
     expect(stderr).toBe("");
   });
 
@@ -164,7 +164,7 @@ describe("main", () => {
     const cwd = await tempDir();
     const cap = capture(cwd);
     expect(await main(["--not-a-real-flag"], cap.io)).toBe(2);
-    expect(cap.text().stderr).toMatch(/^agentsmd-doctor: /);
+    expect(cap.text().stderr).toMatch(/^agentsmd-medic: /);
     expect(cap.text().stderr.toLowerCase()).toContain("unknown");
     expect(cap.text().stdout).toBe("");
   });
@@ -173,7 +173,7 @@ describe("main", () => {
     const cwd = await tempDir();
     const cap = capture(cwd);
     expect(await main(["--config", "missing.json"], cap.io)).toBe(2);
-    expect(cap.text().stderr).toMatch(/^agentsmd-doctor: Cannot read config file /);
+    expect(cap.text().stderr).toMatch(/^agentsmd-medic: Cannot read config file /);
     expect(cap.text().stderr).toContain("missing.json");
   });
 
@@ -212,7 +212,7 @@ describe("main", () => {
     const cwd = await tempDir();
     const cap = capture(cwd);
     expect(await main(["missing.md"], cap.io)).toBe(2);
-    expect(cap.text().stderr).toBe("agentsmd-doctor: Path not found: missing.md\n");
+    expect(cap.text().stderr).toBe("agentsmd-medic: Path not found: missing.md\n");
   });
 
   it("reports doctor findings and exits 0", async () => {
@@ -260,7 +260,7 @@ describe("main", () => {
     await writeTree(cwd, { "AGENTS.md": clean, doctor: clean });
     const missing = capture(cwd);
     expect(await main(["doctor", "missing"], missing.io)).toBe(2);
-    expect(missing.text().stderr).toBe("agentsmd-doctor: Path not found: missing\n");
+    expect(missing.text().stderr).toBe("agentsmd-medic: Path not found: missing\n");
 
     const file = capture(cwd);
     expect(await main(["doctor", "AGENTS.md"], file.io)).toBe(2);

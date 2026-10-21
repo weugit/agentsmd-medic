@@ -124,7 +124,7 @@ export function formatGithub(result: LintResult, cwd: string): string {
     const rel = escapeProperty(toPosix(path.relative(cwd, path.resolve(file.file))));
     for (const diagnostic of file.diagnostics) {
       const kind = diagnostic.severity === "error" ? "error" : "warning";
-      const title = escapeProperty(`agentsmd-doctor (${diagnostic.ruleId})`);
+      const title = escapeProperty(`agentsmd-medic (${diagnostic.ruleId})`);
       const message = escapeData(diagnostic.message);
       lines.push(`::${kind} file=${rel},line=${diagnostic.line},col=${diagnostic.column},title=${title}::${message}`);
     }

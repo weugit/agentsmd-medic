@@ -41,13 +41,13 @@ describe("lintText", () => {
   });
 
   it("disables every rule for the whole file", () => {
-    expect(lintSource("<!-- agentsmd-doctor-disable -->\n")).toEqual([]);
-    const later = "TODO\n\n<!-- agentsmd-doctor-disable -->\n";
+    expect(lintSource("<!-- agentsmd-medic-disable -->\n")).toEqual([]);
+    const later = "TODO\n\n<!-- agentsmd-medic-disable -->\n";
     expect(lintSource(later)).toEqual([]);
   });
 
   it("disables only the named rules", () => {
-    const source = "<!-- agentsmd-doctor-disable no-placeholder, no-secrets -->\n# Work\n\nTODO\n";
+    const source = "<!-- agentsmd-medic-disable no-placeholder, no-secrets -->\n# Work\n\nTODO\n";
     const findings = lintSource(source);
     expect(forRule(findings, "no-placeholder")).toEqual([]);
     expect(findings.some((finding) => finding.ruleId === "no-empty-file")).toBe(false);
@@ -55,18 +55,18 @@ describe("lintText", () => {
   });
 
   it("disables the next non-blank line", () => {
-    const source = ["# Work", "", "<!-- agentsmd-doctor-disable-next-line no-placeholder -->", "TODO", "FIXME", ""].join("\n");
+    const source = ["# Work", "", "<!-- agentsmd-medic-disable-next-line no-placeholder -->", "TODO", "FIXME", ""].join("\n");
     const findings = forRule(lintSource(source), "no-placeholder");
     expect(findings.map((finding) => finding.message)).toEqual(['Placeholder text "FIXME" found; agents may follow it literally.']);
   });
 
   it("skips blank lines when applying disable-next-line", () => {
-    const source = ["# Work", "", "<!-- agentsmd-doctor-disable-next-line -->", "", "TODO", ""].join("\n");
+    const source = ["# Work", "", "<!-- agentsmd-medic-disable-next-line -->", "", "TODO", ""].join("\n");
     expect(forRule(lintSource(source), "no-placeholder")).toEqual([]);
   });
 
   it("does not treat a directive inside a fence as a disable", () => {
-    const source = ["# Work", "", "```", "<!-- agentsmd-doctor-disable -->", "```", "", "TODO outside", ""].join("\n");
+    const source = ["# Work", "", "```", "<!-- agentsmd-medic-disable -->", "```", "", "TODO outside", ""].join("\n");
     expect(forRule(lintSource(source), "no-placeholder")).toHaveLength(1);
   });
 
@@ -134,11 +134,11 @@ describe("lint", () => {
   it("loads config severity from the working directory", async () => {
     const root = await tempDir();
     await writeTree(root, {
-      ".agentsmd-doctor.json": JSON.stringify({ rules: { "no-placeholder": "error" } }),
+      ".agentsmd-medic.json": JSON.stringify({ rules: { "no-placeholder": "error" } }),
       "AGENTS.md": "# Work\n\nTODO\n",
     });
     const result = await lint({ cwd: root });
-    expect(result.configPath).toBe(path.join(root, ".agentsmd-doctor.json"));
+    expect(result.configPath).toBe(path.join(root, ".agentsmd-medic.json"));
     expect(result.errorCount).toBe(1);
     expect(result.warningCount).toBe(0);
     expect(result.files[0]?.diagnostics[0]?.ruleId).toBe("no-placeholder");
@@ -147,7 +147,7 @@ describe("lint", () => {
   it("throws ConfigError when config names an unknown rule", async () => {
     const root = await tempDir();
     await writeTree(root, {
-      ".agentsmd-doctor.json": JSON.stringify({ rules: { nope: "warn" } }),
+      ".agentsmd-medic.json": JSON.stringify({ rules: { nope: "warn" } }),
       "AGENTS.md": clean,
     });
     await expect(lint({ cwd: root })).rejects.toThrow(ConfigError);

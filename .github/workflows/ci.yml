@@ -49,7 +49,7 @@ jobs:
         run: npm run build
 
       - name: Lint AGENTS.md
-        run: node bin/agentsmd-doctor.js .
+        run: node bin/agentsmd-medic.js .
 
   action:
     name: action

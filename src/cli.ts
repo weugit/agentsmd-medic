@@ -26,11 +26,11 @@ function isFormat(value: string): value is FormatName {
 
 function helpText(): string {
   const configNames = CONFIG_FILE_NAMES.map((name) => `  ${name}`).join("\n");
-  return `agentsmd-doctor — lint AGENTS.md instruction files
+  return `agentsmd-medic — lint AGENTS.md instruction files
 
 Usage:
-  agentsmd-doctor [options] [path...]
-  agentsmd-doctor doctor [options] [dir]
+  agentsmd-medic [options] [path...]
+  agentsmd-medic doctor [options] [dir]
 
 Lint AGENTS.md and AGENTS.override.md files. A path that is a file is linted
 directly. A path that is a directory is searched recursively. The default path
@@ -77,11 +77,11 @@ ${configNames}
                    characters count as one token; other text is chars / 4
 
 Inline comments in an AGENTS.md file:
-  <!-- agentsmd-doctor-disable -->
-  <!-- agentsmd-doctor-disable rule-a, rule-b -->
+  <!-- agentsmd-medic-disable -->
+  <!-- agentsmd-medic-disable rule-a, rule-b -->
       Disable every rule, or the named rules, for the whole file.
-  <!-- agentsmd-doctor-disable-next-line -->
-  <!-- agentsmd-doctor-disable-next-line rule-a, rule-b -->
+  <!-- agentsmd-medic-disable-next-line -->
+  <!-- agentsmd-medic-disable-next-line rule-a, rule-b -->
       Disable every rule, or the named rules, for the next non-blank line.
   Comments inside fenced code blocks are not treated as directives.
 
@@ -91,7 +91,7 @@ Exit codes:
      report contains warnings
   1  One or more errors, or more warnings than --max-warnings
   2  Usage error, invalid config, or a path that does not exist
-     The message is written to stderr and prefixed with "agentsmd-doctor: ".
+     The message is written to stderr and prefixed with "agentsmd-medic: ".
 `;
 }
 
@@ -128,7 +128,7 @@ function writeLine(write: (s: string) => unknown, text: string): void {
 }
 
 function fail(io: Io, message: string): number {
-  writeLine((s) => io.stderr.write(s), `agentsmd-doctor: ${message}`);
+  writeLine((s) => io.stderr.write(s), `agentsmd-medic: ${message}`);
   return 2;
 }
 

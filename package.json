@@ -1,5 +1,5 @@
 {
-  "name": "agentsmd-doctor",
+  "name": "agentsmd-medic",
   "version": "0.1.0",
   "description": "Lint and validate AGENTS.md files — the instructions AI coding agents (Codex, Cursor, Copilot, Jules, ...) read from your repo.",
   "keywords": [
@@ -16,15 +16,15 @@
   "author": "weugit",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/weugit/agentsmd-doctor.git"
+    "url": "git+https://github.com/weugit/agentsmd-medic.git"
   },
   "bugs": {
-    "url": "https://github.com/weugit/agentsmd-doctor/issues"
+    "url": "https://github.com/weugit/agentsmd-medic/issues"
   },
-  "homepage": "https://github.com/weugit/agentsmd-doctor#readme",
+  "homepage": "https://github.com/weugit/agentsmd-medic#readme",
   "type": "module",
   "bin": {
-    "agentsmd-doctor": "bin/agentsmd-doctor.js"
+    "agentsmd-medic": "bin/agentsmd-medic.js"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -55,7 +55,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "check": "npm run lint && npm run typecheck && npm test",
-    "selfcheck": "npm run build && node bin/agentsmd-doctor.js .",
+    "selfcheck": "npm run build && node bin/agentsmd-medic.js .",
     "prepublishOnly": "npm run check && npm run build"
   },
   "devDependencies": {

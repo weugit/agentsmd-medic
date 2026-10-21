@@ -201,7 +201,7 @@ describe("formatGithub", () => {
       ROOT,
     );
     expect(output).toBe(
-      ["::error file=AGENTS.md,line=1,col=1,title=agentsmd-doctor (no-empty-file)::Empty.", "::warning file=AGENTS.md,line=3,col=2,title=agentsmd-doctor (no-placeholder)::Todo."].join(
+      ["::error file=AGENTS.md,line=1,col=1,title=agentsmd-medic (no-empty-file)::Empty.", "::warning file=AGENTS.md,line=3,col=2,title=agentsmd-medic (no-placeholder)::Todo."].join(
         "\n",
       ),
     );
@@ -219,7 +219,7 @@ describe("formatGithub", () => {
       ROOT,
     );
     expect(output).toBe(
-      "::error file=name%3Awith%2Ccomma.md,line=2,col=3,title=agentsmd-doctor (no-secrets)::100%25 done%0D%0Anext, still %250A",
+      "::error file=name%3Awith%2Ccomma.md,line=2,col=3,title=agentsmd-medic (no-secrets)::100%25 done%0D%0Anext, still %250A",
     );
   });
 

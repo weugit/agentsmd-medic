@@ -15,7 +15,7 @@ afterEach(async () => {
 
 /** Fresh directory under the OS temp dir. Removed after each test. */
 export async function tempDir(): Promise<string> {
-  const dir = await mkdtemp(path.join(tmpdir(), "agentsmd-doctor-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "agentsmd-medic-"));
   temps.push(dir);
   return dir;
 }
